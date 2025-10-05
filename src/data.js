@@ -1,0 +1,123 @@
+export const productData = [
+  {
+    name: "iPhone 15 Pro",
+    image:
+      "https://images.unsplash.com/photo-1646337491024-bb0bcf9aad0b?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    cost: "129999",
+    rating: 5,
+  },
+  {
+    name: "Samsung Galaxy S24 Ultra",
+    image: "https://images.unsplash.com/photo-1617042375876-dae2b1b5d2a4",
+    cost: "118999",
+    rating: 5,
+  },
+  {
+    name: "Sony WH-1000XM5 Headphones",
+    image: "https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb",
+    cost: "29990",
+    rating: 4,
+  },
+  {
+    name: "MacBook Air M3",
+    image: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8",
+    cost: "134900",
+    rating: 5,
+  },
+  {
+    name: "Nike Air Max 270",
+    image: "https://images.unsplash.com/photo-1606813909355-8e933ed9de13",
+    cost: "11999",
+    rating: 4,
+  },
+  {
+    name: "Apple Watch Series 9",
+    image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30",
+    cost: "41900",
+    rating: 5,
+  },
+  {
+    name: "Dell XPS 13 Laptop",
+    image: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8",
+    cost: "125000",
+    rating: 4,
+  },
+  {
+    name: "Canon EOS R50 Camera",
+    image: "https://images.unsplash.com/photo-1519183071298-a2962be96c83",
+    cost: "82990",
+    rating: 5,
+  },
+  {
+    name: "Adidas Ultraboost 23",
+    image: "https://images.unsplash.com/photo-1606813909355-8e933ed9de13",
+    cost: "14999",
+    rating: 4,
+  },
+  {
+    name: "LG 55-inch OLED TV",
+    image: "https://images.unsplash.com/photo-1586773860418-d37222d8fce3",
+    cost: "124999",
+    rating: 5,
+  },
+  {
+    name: "Instant Pot Duo 7-in-1",
+    image: "https://images.unsplash.com/photo-1616628188502-86e94b2b2a2a",
+    cost: "9999",
+    rating: 4,
+  },
+  {
+    name: "Apple iPad Air (M2)",
+    image: "https://images.unsplash.com/photo-1612831819394-39f0e6e1f3d8",
+    cost: "59900",
+    rating: 5,
+  },
+  {
+    name: "HP LaserJet Pro Printer",
+    image: "https://images.unsplash.com/photo-1581093588401-22a5c1f3a951",
+    cost: "15999",
+    rating: 4,
+  },
+  {
+    name: "Mi Smart LED Bulb",
+    image: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b",
+    cost: "799",
+    rating: 3,
+  },
+  {
+    name: "Samsung Galaxy Buds 2 Pro",
+    image: "https://images.unsplash.com/photo-1583225151035-1ec19ce2e9cb",
+    cost: "17999",
+    rating: 4,
+  },
+  {
+    name: "Dyson V12 Vacuum Cleaner",
+    image: "https://images.unsplash.com/photo-1606811839561-8a26b4debcf5",
+    cost: "58900",
+    rating: 5,
+  },
+  {
+    name: "Fossil Gen 6 Smartwatch",
+    image: "https://images.unsplash.com/photo-1511385348-a52b4a160dc2",
+    cost: "22995",
+    rating: 4,
+  },
+  {
+    name: "Boat Stone 350 Speaker",
+    image: "https://images.unsplash.com/photo-1609921212029-bb5a28fa4b2a",
+    cost: "1799",
+    rating: 3,
+  },
+  {
+    name: "Logitech MX Master 3S Mouse",
+    image: "https://images.unsplash.com/photo-1611078489935-0cb964de46d8",
+    cost: "9495",
+    rating: 5,
+  },
+  {
+    name: "ASUS TUF Gaming F15",
+    image: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8",
+    cost: "89999",
+    rating: 5,
+  },
+];

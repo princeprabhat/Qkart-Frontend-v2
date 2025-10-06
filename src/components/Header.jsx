@@ -7,7 +7,12 @@ import PersonIcon from "@mui/icons-material/Person";
 
 import "./Header.css";
 
-const Header = ({ children, hasHiddenAuthButtons, IsLoggedIn, isAdmin }) => {
+const Header = ({
+  children,
+  hasHiddenAuthButtons,
+  IsLoggedIn,
+  isAdmin = false,
+}) => {
   const navigate = useNavigate();
 
   return (
@@ -65,7 +70,7 @@ const Header = ({ children, hasHiddenAuthButtons, IsLoggedIn, isAdmin }) => {
               {localStorage.getItem("username").slice(0, 2).toUpperCase()}
             </span>
           </div>
-          {isAdmin && (
+          {isAdmin == true && (
             <Button
               className="admin-button"
               variant="outlined"

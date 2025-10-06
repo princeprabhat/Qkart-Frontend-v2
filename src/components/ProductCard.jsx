@@ -8,13 +8,12 @@ import {
   Rating,
   Typography,
 } from "@mui/material";
-import React from "react";
+
 import "./ProductCard.css";
 
 const ProductCard = ({ product, handleAddToCart }) => {
   const token = localStorage.getItem("token");
   const productId = product["_id"];
-  const options = "ADD TO CART";
   const qty = 1;
 
   return (
@@ -24,6 +23,7 @@ const ProductCard = ({ product, handleAddToCart }) => {
         alt={product.name}
         height="auto"
         image={product.image}
+        className="product-img"
       />
       <CardContent>
         <Typography gutterBottom level="title-lg" component="div">
@@ -46,7 +46,9 @@ const ProductCard = ({ product, handleAddToCart }) => {
           variant="contained"
           fullWidth
           onClick={() =>
-            handleAddToCart(token, null, null, productId, qty, options)
+            handleAddToCart(token, null, null, productId, qty, {
+              preventDuplicate: true,
+            })
           }
         >
           <AddShoppingCartOutlined /> ADD TO CART

@@ -37,7 +37,8 @@ const Login = () => {
             res.data.tokens.access.token,
             res.data.user.name,
             res.data.user.walletMoney,
-            res.data.user["_id"]
+            res.data.user["_id"],
+            res.data.user.isAdmin
           );
           enqueueSnackbar("Logged in successfully", { variant: "success" });
           setLoader(false);
@@ -108,11 +109,12 @@ const Login = () => {
    * -    `username` field in localStorage can be used to store the username that the user is logged in as
    * -    `balance` field in localStorage can be used to store the balance amount in the user's wallet
    */
-  const persistLogin = (token, name, balance, id) => {
+  const persistLogin = (token, name, balance, id, adminUser) => {
     localStorage.setItem("token", token);
     localStorage.setItem("username", name);
     localStorage.setItem("balance", balance);
     localStorage.setItem("userId", id);
+    localStorage.setItem("isAdmin", adminUser);
   };
 
   return (

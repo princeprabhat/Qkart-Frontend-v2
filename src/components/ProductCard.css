@@ -13,3 +13,6 @@
   text-transform: none;
   font-weight: 600;
 }
+.product-img {
+  aspect-ratio: 1;
+}

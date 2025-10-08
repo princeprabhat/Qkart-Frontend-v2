@@ -6,8 +6,11 @@ import Products from "./components/Products";
 import Checkout from "./components/Checkout";
 import Thanks from "./components/Thanks";
 
+const prodUrl = `https://qkart-backend-v2-ku0s.onrender.com/api/v1`;
+const localUrl = `http://localhost:3000/api/v1`;
 export const config = {
-  endpoint: `http://localhost:3000/api/v1`,
+  endpoint:
+    import.meta.env.VITE_ENVIRONMENT == "development" ? localUrl : prodUrl,
 };
 
 function App() {

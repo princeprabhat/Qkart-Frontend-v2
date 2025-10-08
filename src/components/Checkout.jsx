@@ -10,7 +10,7 @@ import {
 import { Box } from "@mui/system";
 import axios from "axios";
 import { useSnackbar } from "notistack";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { config } from "../App";
 import Cart, { getTotalCartValue, generateCartItemsFrom } from "./Cart";
@@ -67,13 +67,39 @@ const Checkout = () => {
   const token = localStorage.getItem("token");
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
-  const [items, setItems] = useState([]);
+  const [cartItems, setCartItems] = useState([]);
   const [products, setProducts] = useState([]);
   const [addresses, setAddresses] = useState({ all: [], selected: "" });
   const [newAddress, setNewAddress] = useState({
     isAddingNewAddress: false,
     value: "",
   });
+
+  // Get All cart Items by token provided, req-Token, res - cartItems:[{}]
+
+  const getCartItems = async () => {
+    if (!token) {
+      return;
+    }
+    const url = `${config.endpoint}/cart`;
+    await axios
+      .get(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .then((res) => {
+        if (res.status == 200) {
+          setCartItems(res.data.cart.cartItems);
+        }
+      })
+      .catch((err) => {
+        const errMsg =
+          err.message + " Please try again later" ||
+          "Something Went Wrong Fetching Cart Details";
+        enqueueSnackbar(errMsg, { variant: "error" });
+      });
+  };
 
   // Fetch the entire products list
   const getProducts = async () => {
@@ -120,186 +146,95 @@ const Checkout = () => {
   };
 
   // Get all addresses user have, saved in the db
-  const getAddresses = async (token) => {
+  const getUserAddress = async () => {
     if (!token) return;
-
-    try {
-      const response = await axios.get(`${config.endpoint}/user/addresses`, {
+    const userId = localStorage.getItem("userId");
+    const url = `${config.endpoint}/users/address/${userId}`;
+    await axios
+      .get(url, {
         headers: {
           Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
-      });
-
-      setAddresses({ ...addresses, all: response.data });
-      return response.data;
-    } catch {
-      enqueueSnackbar(
-        "Could not fetch addresses. Check that the backend is running, reachable and returns valid JSON.",
-        {
-          variant: "error",
+      })
+      .then((res) => {
+        if (res.status === 200) {
+          setAddresses((prev) => ({ ...prev, all: res.data.addresses }));
         }
-      );
-      return null;
-    }
+      })
+      .catch((err) => {
+        const errMsg =
+          err.message || "Something went wrong... Please login again";
+        enqueueSnackbar(errMsg, { variant: "error" });
+      });
   };
 
-  /**
-   * Handler function to add a new address and display the latest list of addresses
-   *
-   * @param { String } token
-   *    Login token
-   *
-   * @param { NewAddress } newAddress
-   *    Data on new address being added
-   *
-   * @returns { Array.<Address> }
-   *    Latest list of addresses
-   *
-   * API Endpoint - "POST /user/addresses"
-   *
-   * Example for successful response from backend:
-   * HTTP 200
-   * [
-   *      {
-   *          "_id": "",
-   *          "address": "Test address\n12th street, Mumbai"
-   *      },
-   *      {
-   *          "_id": "BW0jAAeDJmlZCF8i",
-   *          "address": "New address \nKolam lane, Chennai"
-   *      }
-   * ]
-   *
-   * Example for failed response from backend:
-   * HTTP 401
-   * {
-   *      "success": false,
-   *      "message": "Protected route, Oauth2 Bearer token not found"
-   * }
-   */
   const addAddress = async (token, newAddress) => {
     if (!token) return;
+    const userId = localStorage.getItem("userId");
+    const url = `${config.endpoint}/users/address/${userId}`;
 
-    try {
-      // TODO: CRIO_TASK_MODULE_CHECKOUT - Add new address to the backend and display the latest list of addresses\
-      const response = await axios.post(
-        `${config.endpoint}/user/addresses`,
-        {
-          address: newAddress,
-        },
+    await axios
+      .post(
+        url,
+        { address: newAddress },
         {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
         }
-      );
-      setAddresses({ ...addresses, all: response.data });
-
-      setNewAddress({ isAddingNewAddress: false, value: "" });
-    } catch (e) {
-      if (e.response) {
-        enqueueSnackbar(e.response.data.message, { variant: "error" });
-      } else {
-        enqueueSnackbar(
-          "Could not add this address. Check that the backend is running, reachable and returns valid JSON.",
-          {
-            variant: "error",
-          }
-        );
-      }
-    }
-  };
-
-  /**
-   * Handler function to delete an address from the backend and display the latest list of addresses
-   *
-   * @param { String } token
-   *    Login token
-   *
-   * @param { String } addressId
-   *    Id value of the address to be deleted
-   *
-   * @returns { Array.<Address> }
-   *    Latest list of addresses
-   *
-   * API Endpoint - "DELETE /user/addresses/:addressId"
-   *
-   * Example for successful response from backend:
-   * HTTP 200
-   * [
-   *      {
-   *          "_id": "",
-   *          "address": "Test address\n12th street, Mumbai"
-   *      },
-   *      {
-   *          "_id": "BW0jAAeDJmlZCF8i",
-   *          "address": "New address \nKolam lane, Chennai"
-   *      }
-   * ]
-   *
-   * Example for failed response from backend:
-   * HTTP 401
-   * {
-   *      "success": false,
-   *      "message": "Protected route, Oauth2 Bearer token not found"
-   * }
-   */
-  const deleteAddress = async (token, addressId) => {
-    if (!token) return;
-
-    try {
-      // TODO: CRIO_TASK_MODULE_CHECKOUT - Delete selected address from the backend and display the latest list of addresses
-      const response = await axios.delete(
-        `${config.endpoint}/user/addresses/${addressId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/json, text/plain, */*",
-          },
+      )
+      .then((res) => {
+        if (res.status === 201) {
+          setAddresses((prev) => ({ ...prev, all: res.data.addresses }));
+          setNewAddress({ isAddingNewAddress: false, value: "" });
         }
-      );
-
-      setAddresses({ ...addresses, all: response.data });
-    } catch (e) {
-      if (e.response) {
-        enqueueSnackbar(e.response.data.message, { variant: "error" });
-      } else {
-        enqueueSnackbar(
-          "Could not delete this address. Check that the backend is running, reachable and returns valid JSON.",
-          {
+      })
+      .catch((err) => {
+        if (err.status == 409) {
+          enqueueSnackbar(err.response.data.Error, { variant: "error" });
+        } else if (err.status == 400) {
+          enqueueSnackbar(err.response.data.Error, { variant: "error" });
+        } else {
+          enqueueSnackbar(err.message + " Please try again later", {
             variant: "error",
-          }
-        );
-      }
-    }
+          });
+        }
+      });
   };
 
-  // TODO: CRIO_TASK_MODULE_CHECKOUT - Validate request for checkout
-  /**
-   * Return if the request validation passed. If it fails, display appropriate warning message.
-   *
-   * Validation checks - show warning message with given text if any of these validation fails
-   *
-   *  1. Not enough balance available to checkout cart items
-   *    "You do not have enough balance in your wallet for this purchase"
-   *
-   *  2. No addresses added for user
-   *    "Please add a new address before proceeding."
-   *
-   *  3. No address selected for checkout
-   *    "Please select one shipping address to proceed."
-   *
-   * @param { Array.<CartItem> } items
-   *    Array of objects with complete data on products added to the cart
-   *
-   * @param { Addresses } addresses
-   *    Contains data on array of addresses and selected address id
-   *
-   * @returns { Boolean }
-   *    Whether validation passed or not
-   *
-   */
+  const deleteAddress = async (addressId) => {
+    if (!token) return;
+    const userId = localStorage.getItem("userId");
+    const url = `${config.endpoint}/users/address/${userId}`;
+
+    await axios
+      .delete(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        data: { addressId },
+      })
+      .then((res) => {
+        if (res.status == 200) {
+          setAddresses((prev) => ({ ...prev, all: res.data.addresses }));
+        }
+      })
+      .catch((err) => {
+        if (err.status == 401) {
+          enqueueSnackbar("Please authenticate, sign-in again", {
+            variant: "error",
+          });
+        } else {
+          const errMsg =
+            err.message || "Some error occured, Please try after some time";
+          enqueueSnackbar(errMsg, { variant: "error" });
+        }
+      });
+  };
+
   const validateRequest = (items, addresses) => {
     const totalPrice = getTotalCartValue(items);
     const walletBalance = localStorage.getItem("balance");
@@ -331,38 +266,6 @@ const Checkout = () => {
     return true;
   };
 
-  // TODO: CRIO_TASK_MODULE_CHECKOUT
-  /**
-   * Handler function to perform checkout operation for items added to the cart for the selected address
-   *
-   * @param { String } token
-   *    Login token
-   *
-   * @param { Array.<CartItem } items
-   *    Array of objects with complete data on products added to the cart
-   *
-   * @param { Addresses } addresses
-   *    Contains data on array of addresses and selected address id
-   *
-   * @returns { Boolean }
-   *    If checkout operation was successful
-   *
-   * API endpoint - "POST /cart/checkout"
-   *
-   * Example for successful response from backend:
-   * HTTP 200
-   * {
-   *  "success": true
-   * }
-   *
-   * Example for failed response from backend:
-   * HTTP 400
-   * {
-   *  "success": false,
-   *  "message": "Wallet balance not sufficient to place order"
-   * }
-   *
-   */
   const performCheckout = async (token, items, addresses) => {
     if (!token) return;
     try {
@@ -393,30 +296,8 @@ const Checkout = () => {
     }
   };
 
-  // TODO: CRIO_TASK_MODULE_CHECKOUT - Fetch addressses if logged in, otherwise show info message and redirect to Products page
-
-  // Fetch products and cart data on page load
   const isLoggedIn =
     localStorage.getItem("username") && localStorage.getItem("username") !== "";
-  useEffect(() => {
-    if (isLoggedIn) {
-      const onLoadHandler = async () => {
-        const productsData = await getProducts();
-
-        const cartData = await fetchCart(token);
-
-        if (productsData && cartData) {
-          const cartDetails = await generateCartItemsFrom(
-            cartData,
-            productsData
-          );
-          setItems(cartDetails);
-        }
-      };
-      onLoadHandler();
-      getAddresses(token);
-    }
-  }, []);
 
   const updateSelectedAddress = (selectedAddress) => {
     setAddresses((prevState) => ({
@@ -432,6 +313,9 @@ const Checkout = () => {
       });
 
       navigate("/");
+    } else {
+      getUserAddress();
+      getCartItems();
     }
   }, []);
 
@@ -455,7 +339,7 @@ const Checkout = () => {
             </Typography>
             <Divider />
             <Box>
-              {/* TODO: CRIO_TASK_MODULE_CHECKOUT - Display list of addresses and corresponding "Delete" buttons, if present, of which 1 can be selected */}
+              {/*Display list of addresses and corresponding "Delete" buttons, if present, of which 1 can be selected */}
               <Box>
                 {addresses.all.map((item) => {
                   return (
@@ -475,7 +359,7 @@ const Checkout = () => {
                         startIcon={<Delete />}
                         variant="text"
                         onClick={() => {
-                          deleteAddress(token, item._id);
+                          deleteAddress(item._id);
                         }}
                       >
                         DELETE
@@ -527,7 +411,7 @@ const Checkout = () => {
             <Box my="1rem">
               <Typography>Wallet</Typography>
               <Typography>
-                Pay ${getTotalCartValue(items)} of available $
+                Pay ${getTotalCartValue(cartItems)} of available $
                 {localStorage.getItem("balance")}
               </Typography>
             </Box>
@@ -537,15 +421,16 @@ const Checkout = () => {
               variant="contained"
               onClick={() => {
                 if (
-                  validateRequest(items, addresses) &&
-                  performCheckout(token, items, addresses)
+                  validateRequest(cartItems, addresses) &&
+                  performCheckout(token, cartItems, addresses)
                 ) {
                   enqueueSnackbar("Order placed successfully", {
                     variant: "success",
                   });
                   localStorage.setItem(
                     "balance",
-                    localStorage.getItem("balance") - getTotalCartValue(items)
+                    localStorage.getItem("balance") -
+                      getTotalCartValue(cartItems)
                   );
                   navigate("/thanks");
                 }
@@ -556,7 +441,7 @@ const Checkout = () => {
           </Box>
         </Grid>
         <Grid item xs={12} md={3} bgcolor="#E9F5E1">
-          <Cart isReadOnly products={products} items={items} />
+          <Cart isReadOnly cartItems={cartItems} />
         </Grid>
       </Grid>
       <Footer />

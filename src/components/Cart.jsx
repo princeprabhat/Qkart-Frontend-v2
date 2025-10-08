@@ -30,7 +30,7 @@ export const getTotalCartValue = (items = []) => {
 };
 
 export const getTotalItems = (items = []) => {
-  const totalItem = items.reduce((acc, item) => item.qty + acc, 0);
+  const totalItem = items.reduce((acc, item) => item.quantity + acc, 0);
   return totalItem;
 };
 
@@ -61,7 +61,7 @@ const ItemQuantity = ({ value, handleAdd, handleDelete, isReadOnly }) => {
   );
 };
 
-const Cart = ({ products, cartItems = [], handleQuantity, isReadOnly }) => {
+const Cart = ({ products, cartItems, handleQuantity, isReadOnly }) => {
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
 
@@ -76,7 +76,9 @@ const Cart = ({ products, cartItems = [], handleQuantity, isReadOnly }) => {
     );
   }
 
-  const resultCart = generateCartItemsFrom(cartItems, products);
+  const resultCart = isReadOnly
+    ? cartItems
+    : generateCartItemsFrom(cartItems, products);
 
   return (
     <>

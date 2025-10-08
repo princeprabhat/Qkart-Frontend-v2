@@ -119,31 +119,7 @@ const Checkout = () => {
     }
   };
 
-  /**
-   * Fetch list of addresses for a user
-   *
-   * API Endpoint - "GET /user/addresses"
-   *
-   * Example for successful response from backend:
-   * HTTP 200
-   * [
-   *      {
-   *          "_id": "",
-   *          "address": "Test address\n12th street, Mumbai"
-   *      },
-   *      {
-   *          "_id": "BW0jAAeDJmlZCF8i",
-   *          "address": "New address \nKolam lane, Chennai"
-   *      }
-   * ]
-   *
-   * Example for failed response from backend:
-   * HTTP 401
-   * {
-   *      "success": false,
-   *      "message": "Protected route, Oauth2 Bearer token not found"
-   * }
-   */
+  // Get all addresses user have, saved in the db
   const getAddresses = async (token) => {
     if (!token) return;
 
@@ -440,7 +416,6 @@ const Checkout = () => {
       onLoadHandler();
       getAddresses(token);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const updateSelectedAddress = (selectedAddress) => {
@@ -516,7 +491,7 @@ const Checkout = () => {
               )}
             </Box>
 
-            {/* TODO: CRIO_TASK_MODULE_CHECKOUT - Dislay either "Add new address" button or the <AddNewAddressView> component to edit the currently selected address */}
+            {/* Dislay either "Add new address" button or the <AddNewAddressView> component to edit the currently selected address */}
             {!newAddress.isAddingNewAddress ? (
               <Button
                 color="primary"

@@ -1,11 +1,18 @@
-import { Search, SentimentDissatisfied } from "@mui/icons-material";
 import {
+  ChevronLeft,
+  ChevronRight,
+  Search,
+  SentimentDissatisfied,
+} from "@mui/icons-material";
+import {
+  Button,
   CircularProgress,
   Grid,
+  IconButton,
   InputAdornment,
   TextField,
 } from "@mui/material";
-import { Box } from "@mui/system";
+import { border, Box } from "@mui/system";
 import axios from "axios";
 import { useSnackbar } from "notistack";
 import { useEffect, useState } from "react";
@@ -18,6 +25,8 @@ import Cart from "./Cart";
 // import { generateCartItemsFrom } from "./Cart";
 // import { productData } from "../data";
 
+const ITEMS_PER_PAGE = 8;
+
 const Products = () => {
   const isLoggedIn =
     localStorage.getItem("username") && localStorage.getItem("username") !== "";
@@ -28,6 +37,21 @@ const Products = () => {
 
   const [cartItems, setCartItems] = useState([]);
   const [filteredItems, setFilteredItems] = useState([]);
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  const numberOfPages = Math.ceil(filteredItems.length / ITEMS_PER_PAGE);
+
+  const start = ITEMS_PER_PAGE * activeIndex;
+  const end = start + ITEMS_PER_PAGE;
+
+  const handlePageChange = (action) => {
+    if (action == "NextPage" && activeIndex + 1 < numberOfPages) {
+      setActiveIndex((prev) => prev + 1);
+    }
+    if (action == "PrevPage" && activeIndex + 1 > 1) {
+      setActiveIndex((prev) => prev - 1);
+    }
+  };
 
   const performAPICall = async () => {
     setLoader(true);
@@ -130,6 +154,7 @@ const Products = () => {
   // };
 
   // Add a new Item in the cart
+
   const addToCart = async (
     token,
     items,
@@ -261,17 +286,50 @@ const Products = () => {
           ) : (
             <Grid container spacing={2} p={1}>
               {filteredItems.length > 0 &&
-                filteredItems.map((item) => {
+                filteredItems.slice(start, end).map((item) => {
                   return (
-                    <Grid item xs={6} md={3} key={item["_id"]}>
+                    <Grid item xs={6} md={4} lg={3} key={item["_id"]}>
                       <ProductCard product={item} handleAddToCart={addToCart} />
                     </Grid>
                   );
                 })}
             </Grid>
           )}
+          <Box
+            display="flex"
+            justifyContent="center"
+            alignItems="center"
+            width="100%"
+          >
+            <IconButton
+              color="primary"
+              size="large"
+              disabled={activeIndex == 0}
+              onClick={() => handlePageChange("PrevPage")}
+            >
+              <ChevronLeft />
+            </IconButton>
 
-          {filteredItems.length == 0 && (
+            <span
+              style={{
+                borderRadius: "6px",
+                padding: "3px 8px",
+                color: "white",
+                backgroundColor: "#00a278",
+              }}
+            >
+              {activeIndex + 1}
+            </span>
+            <IconButton
+              color="primary"
+              size="large"
+              disabled={activeIndex == numberOfPages - 1}
+              onClick={() => handlePageChange("NextPage")}
+            >
+              <ChevronRight />
+            </IconButton>
+          </Box>
+          {filteredItems.length == 0 && items.length !== 0 && (
             <Box className="loading">
               <SentimentDissatisfied />
               <h4>No products found</h4>
@@ -283,6 +341,7 @@ const Products = () => {
           container
           sx={{
             width: { md: "25%" },
+            justifyContent: { md: "end" },
             alignItems: "flex-start",
             background: "#E9F5E1",
           }}

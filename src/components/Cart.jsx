@@ -82,7 +82,7 @@ const Cart = ({ products, cartItems, handleQuantity, isReadOnly }) => {
 
   return (
     <>
-      <Box className="cart">
+      <Box className="cart" width={{ md: "100%" }}>
         {resultCart.map((item) => {
           return (
             <Box

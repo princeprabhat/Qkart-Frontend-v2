@@ -13,7 +13,7 @@ import { useSnackbar } from "notistack";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { config } from "../App";
-import Cart, { getTotalCartValue, generateCartItemsFrom } from "./Cart";
+import Cart, { getTotalCartValue } from "./Cart";
 import "./Checkout.css";
 import Footer from "./Footer";
 import Header from "./Header";
@@ -68,7 +68,7 @@ const Checkout = () => {
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
   const [cartItems, setCartItems] = useState([]);
-  const [products, setProducts] = useState([]);
+  // const [products, setProducts] = useState([]);
   const [addresses, setAddresses] = useState({ all: [], selected: "" });
   const [newAddress, setNewAddress] = useState({
     isAddingNewAddress: false,
@@ -112,48 +112,8 @@ const Checkout = () => {
   };
 
   // Fetch the entire products list
-  const getProducts = async () => {
-    try {
-      const response = await axios.get(`${config.endpoint}/products`);
-
-      setProducts(response.data);
-      return response.data;
-    } catch (e) {
-      if (e.response && e.response.status === 500) {
-        enqueueSnackbar(e.response.data.message, { variant: "error" });
-        return null;
-      } else {
-        enqueueSnackbar(
-          "Could not fetch products. Check that the backend is running, reachable and returns valid JSON.",
-          {
-            variant: "error",
-          }
-        );
-      }
-    }
-  };
 
   // Fetch cart data
-  const fetchCart = async (token) => {
-    if (!token) return;
-    try {
-      const response = await axios.get(`${config.endpoint}/cart`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      return response.data;
-    } catch {
-      enqueueSnackbar(
-        "Could not fetch cart details. Check that the backend is running, reachable and returns valid JSON.",
-        {
-          variant: "error",
-        }
-      );
-      return null;
-    }
-  };
 
   // Get all addresses user have, saved in the db
   const getUserAddress = async () => {

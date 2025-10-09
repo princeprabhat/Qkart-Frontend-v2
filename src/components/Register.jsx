@@ -1,4 +1,11 @@
-import { Button, CircularProgress, Stack, TextField } from "@mui/material";
+import {
+  Button,
+  CircularProgress,
+  IconButton,
+  InputAdornment,
+  Stack,
+  TextField,
+} from "@mui/material";
 import { Box } from "@mui/system";
 import axios from "axios";
 import { useSnackbar } from "notistack";
@@ -8,6 +15,7 @@ import Footer from "./Footer";
 import Header from "./Header";
 import "./Register.css";
 import { useNavigate, Link } from "react-router-dom";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 
 const Register = () => {
   const { enqueueSnackbar } = useSnackbar();
@@ -15,6 +23,7 @@ const Register = () => {
   const [getPassword, setPassword] = useState("");
   const [getName, setName] = useState("");
   const [loader, setLoader] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   //  @param {{ email: string, password: string, name: string }} formData
@@ -129,7 +138,7 @@ const Register = () => {
             variant="outlined"
             label="Password"
             name="password"
-            type="password"
+            type={showPassword ? "text" : "password"}
             value={getPassword}
             onChange={(e) => {
               setPassword(e.target.value);
@@ -137,6 +146,15 @@ const Register = () => {
             helperText="Password must be atleast 6 characters length"
             fullWidth
             placeholder="Enter a password with minimum 6 characters"
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton onClick={() => setShowPassword((prev) => !prev)}>
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
           />
           {/* <TextField
             id="confirmPassword"

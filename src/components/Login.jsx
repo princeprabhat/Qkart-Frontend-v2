@@ -1,4 +1,11 @@
-import { Button, CircularProgress, Stack, TextField } from "@mui/material";
+import {
+  Button,
+  CircularProgress,
+  IconButton,
+  InputAdornment,
+  Stack,
+  TextField,
+} from "@mui/material";
 import { Box } from "@mui/system";
 import axios from "axios";
 import { useSnackbar } from "notistack";
@@ -8,12 +15,14 @@ import { config } from "../App";
 import Footer from "./Footer";
 import Header from "./Header";
 import "./Login.css";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 
 const Login = () => {
   const { enqueueSnackbar } = useSnackbar();
   const [getEmail, setEmail] = useState("");
   const [getPassword, setPassword] = useState("");
   const [loader, setLoader] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const navigate = useNavigate();
 
@@ -146,13 +155,22 @@ const Login = () => {
             variant="outlined"
             label="password"
             name="password"
-            type="password"
+            type={showPassword ? "text" : "password"}
             value={getPassword}
             onChange={(e) => {
               setPassword(e.target.value);
             }}
             fullWidth
             placeholder="Enter password"
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton onClick={() => setShowPassword((prev) => !prev)}>
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
           />
           {!loader ? (
             <Button

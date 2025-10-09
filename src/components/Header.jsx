@@ -17,8 +17,8 @@ const Header = ({
 
   return (
     <Box className="header">
-      <Box className="header-title">
-        <img src="logo_light.svg" alt="QKart-icon"></img>
+      <Box className="header-title" onClick={() => navigate("/")}>
+        <img src="logo_light.svg" alt="QKart-icon" />
       </Box>
       <Box>{children}</Box>
       {!hasHiddenAuthButtons && (

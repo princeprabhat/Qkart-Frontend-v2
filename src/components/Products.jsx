@@ -67,9 +67,32 @@ const Products = () => {
   };
 
   // Calling Api to fetch Products and if user is logged in fetch the cartItems
-
+  const token = localStorage.getItem("token");
   useEffect(() => {
     performAPICall();
+
+    const alreadyShown = sessionStorage.getItem("serverWakeupMessageShown");
+
+    if (!alreadyShown && (!isLoggedIn || !token)) {
+      enqueueSnackbar(
+        "Our servers are waking up. This may take 20–25 seconds. Thank you for your patience — your experience will load shortly.",
+        {
+          variant: "info",
+          anchorOrigin: { vertical: "top", horizontal: "center" },
+          autoHideDuration: 8000,
+          sx: {
+            fontSize: "1.1rem",
+            fontWeight: "500",
+            maxWidth: "600px",
+            textAlign: "center",
+            padding: "16px",
+            borderRadius: "8px",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+          },
+        }
+      );
+      sessionStorage.setItem("serverWakeupMessageShown", "true");
+    }
 
     if (isLoggedIn) {
       fetchCart(localStorage.getItem("token"));

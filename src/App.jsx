@@ -5,6 +5,7 @@ import Login from "./components/Login";
 import Products from "./components/Products";
 import Checkout from "./components/Checkout";
 import Thanks from "./components/Thanks";
+import NotFound from "./components/NotFound";
 
 const prodUrl = `https://qkart-backend-v2-ku0s.onrender.com/api/v1`;
 const localUrl = `http://localhost:3000/api/v1`;
@@ -22,6 +23,7 @@ function App() {
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/thanks" element={<Thanks />} />
         <Route path="/" element={<Products />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </div>
   );

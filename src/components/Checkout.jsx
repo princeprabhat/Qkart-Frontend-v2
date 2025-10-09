@@ -92,6 +92,16 @@ const Checkout = () => {
         if (res.status == 200) {
           setCartItems(res.data.cart.cartItems);
         }
+        if (res.data.cart.cartItems.length == 0) {
+          enqueueSnackbar(
+            "You must have items in cart to access checkout page",
+            {
+              variant: "warning",
+            }
+          );
+
+          navigate("/");
+        }
       })
       .catch((err) => {
         const errMsg =
@@ -187,7 +197,11 @@ const Checkout = () => {
       )
       .then((res) => {
         if (res.status === 201) {
-          setAddresses((prev) => ({ ...prev, all: res.data.addresses }));
+          setAddresses((prev) => ({
+            ...prev,
+            all: res.data.addresses,
+            selected: res.data.addresses[res.data.addresses.length - 1]._id,
+          }));
           setNewAddress({ isAddingNewAddress: false, value: "" });
         }
       })
@@ -235,65 +249,106 @@ const Checkout = () => {
       });
   };
 
-  const validateRequest = (items, addresses) => {
-    const totalPrice = getTotalCartValue(items);
-    const walletBalance = localStorage.getItem("balance");
+  // const validateRequest = (items, addresses) => {
+  //   const totalPrice = getTotalCartValue(items);
+  //   const walletBalance = localStorage.getItem("balance");
 
-    if (walletBalance < totalPrice) {
-      enqueueSnackbar(
-        "You do not have enough balance in your wallet for this purchase",
-        {
-          variant: "warning",
-        }
-      );
-      return false;
-    }
+  //   if (walletBalance < totalPrice) {
+  //     enqueueSnackbar(
+  //       "You do not have enough balance in your wallet for this purchase",
+  //       {
+  //         variant: "warning",
+  //       }
+  //     );
+  //     return false;
+  //   }
 
-    if (addresses.all.length === 0) {
-      enqueueSnackbar("Please add a new address before proceeding.", {
-        variant: "warning",
-      });
-      return false;
-    }
+  //   if (addresses.all.length === 0) {
+  //     enqueueSnackbar("Please add a new address before proceeding.", {
+  //       variant: "warning",
+  //     });
+  //     return false;
+  //   }
 
-    if (addresses.selected.length === 0) {
-      enqueueSnackbar("Please select one shipping address to proceed.", {
-        variant: "warning",
-      });
-      return false;
-    }
+  //   if (addresses.selected.length === 0) {
+  //     enqueueSnackbar("Please select one shipping address to proceed.", {
+  //       variant: "warning",
+  //     });
+  //     return false;
+  //   }
 
-    return true;
-  };
+  //   return true;
+  // };
 
-  const performCheckout = async (token, items, addresses) => {
+  const performCheckout = async (token, addresses) => {
     if (!token) return;
-    try {
-      await axios.post(
-        `${config.endpoint}/cart/checkout`,
-        {
-          addressId: addresses.selected,
-        },
+
+    if (addresses.all.length == 0) {
+      enqueueSnackbar("Please add an adress before checkout", {
+        variant: "warning",
+      });
+      return;
+    }
+    if (addresses.selected.length == 0) {
+      enqueueSnackbar("Please select an address to checkout", {
+        variant: "warning",
+      });
+      return;
+    }
+    const url = `${config.endpoint}/cart/checkout`;
+    await axios
+      .put(
+        url,
+        { addressId: addresses.selected },
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         }
-      );
-      return true;
-    } catch (e) {
-      if (e.response) {
-        enqueueSnackbar(e.response.data.message, { variant: "error" });
-      } else {
-        enqueueSnackbar(
-          "Could not delete this address. Check that the backend is running, reachable and returns valid JSON.",
-          {
-            variant: "error",
-          }
-        );
-      }
-      return false;
-    }
+      )
+      .then((res) => {
+        enqueueSnackbar("Order placed successfully", {
+          variant: "success",
+        });
+        localStorage.setItem("balance", res.data.cart.remainingWallet);
+        navigate("/thanks");
+      })
+      .catch((err) => {
+        if (err.status == 400 || err.status == 404) {
+          enqueueSnackbar(err.response.data.Error, { variant: "error" });
+        } else {
+          const errMsg =
+            err.message || "Something went wrong. Please try again later";
+          enqueueSnackbar(errMsg, { variant: "error" });
+        }
+      });
+
+    // try {
+    //   await axios.post(
+    //     `${config.endpoint}/cart/checkout`,
+    //     {
+    //       addressId: addresses.selected,
+    //     },
+    //     {
+    //       headers: {
+    //         Authorization: `Bearer ${token}`,
+    //       },
+    //     }
+    //   );
+    //   return true;
+    // } catch (e) {
+    //   if (e.response) {
+    //     enqueueSnackbar(e.response.data.message, { variant: "error" });
+    //   } else {
+    //     enqueueSnackbar(
+    //       "Could not delete this address. Check that the backend is running, reachable and returns valid JSON.",
+    //       {
+    //         variant: "error",
+    //       }
+    //     );
+    //   }
+    //   return false;
+    // }
   };
 
   const isLoggedIn =
@@ -420,20 +475,20 @@ const Checkout = () => {
               startIcon={<CreditCard />}
               variant="contained"
               onClick={() => {
-                if (
-                  validateRequest(cartItems, addresses) &&
-                  performCheckout(token, cartItems, addresses)
-                ) {
-                  enqueueSnackbar("Order placed successfully", {
-                    variant: "success",
-                  });
-                  localStorage.setItem(
-                    "balance",
-                    localStorage.getItem("balance") -
-                      getTotalCartValue(cartItems)
-                  );
-                  navigate("/thanks");
-                }
+                performCheckout(token, addresses);
+                // if (
+                //   // validateRequest(cartItems, addresses)
+                // ) {
+                //   enqueueSnackbar("Order placed successfully", {
+                //     variant: "success",
+                //   });
+                //   localStorage.setItem(
+                //     "balance",
+                //     localStorage.getItem("balance") -
+                //       getTotalCartValue(cartItems)
+                //   );
+                //   navigate("/thanks");
+                // }
               }}
             >
               PLACE ORDER

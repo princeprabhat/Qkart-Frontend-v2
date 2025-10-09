@@ -85,8 +85,8 @@ const Header = ({
             variant="text"
             onClick={() => {
               localStorage.clear();
-              window.location.reload();
               navigate("/");
+              window.location.reload();
             }}
           >
             LOGOUT

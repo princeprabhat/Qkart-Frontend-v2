@@ -74,7 +74,7 @@ const Header = ({
             <Button
               className="admin-button"
               variant="outlined"
-              onClick={() => {}}
+              onClick={() => navigate("/admin")}
             >
               Admin
             </Button>

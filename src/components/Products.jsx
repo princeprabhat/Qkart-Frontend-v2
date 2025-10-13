@@ -225,7 +225,6 @@ const Products = () => {
         IsLoggedIn={isLoggedIn}
         isAdmin={localStorage.getItem("isAdmin") === "true" ? true : false}
       >
-        {/* TODO: CRIO_TASK_MODULE_PRODUCTS - Display search bar in the header for Products page */}
         <TextField
           sx={{ width: "350px" }}
           className="search-desktop"
@@ -337,7 +336,7 @@ const Products = () => {
             </Box>
           )}
         </Grid>
-        {/* TODO: CRIO_TASK_MODULE_CART - Display the Cart component */}
+        {/*Display the Cart component */}
         <Grid
           container
           sx={{

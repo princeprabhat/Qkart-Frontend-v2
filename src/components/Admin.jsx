@@ -3,6 +3,7 @@ import {
   AdminPanelSettings,
   AttachMoney,
   Delete,
+  Cancel,
   Edit,
   Group,
   Inventory,
@@ -32,100 +33,75 @@ import {
   Typography,
 } from "@mui/material";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Footer from "./Footer";
 import Header from "./Header";
 import { useSnackbar } from "notistack";
+import { config } from "../App";
+import axios from "axios";
 
 const Admin = () => {
   const isLoggedIn =
     localStorage.getItem("username") && localStorage.getItem("username") !== "";
   const isAdmin = localStorage.getItem("isAdmin") === "true";
+  const token = localStorage.getItem("token");
 
-  const enqueueSnackbar = useSnackbar();
+  const { enqueueSnackbar } = useSnackbar();
+  const [products, setProducts] = useState([]);
+  const [users, setUsers] = useState([]);
+
+  // Fetch All Products
+  const fetchAllProducts = async () => {
+    if (!token) return;
+    const url = `${config.endpoint}/admin/products`;
+    await axios
+      .get(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .then((res) => {
+        if (res.status === 200) {
+          setProducts(res.data.data);
+        }
+      })
+      .catch((err) => {
+        if (err.status === 401) {
+          enqueueSnackbar(err.response.data.Error, { variant: "error" });
+        } else {
+          const errMsg =
+            err.message || "Something Went Wrong Fetching Products";
+          enqueueSnackbar(errMsg, { variant: "error" });
+        }
+      });
+  };
+  // TODO: Fetch All Users
+  const fetchAllUsers = async () => {
+    if (!token) return;
+    const url = `${config.endpoint}/admin/users`;
+    await axios
+      .get(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .then((res) => {
+        if (res.status === 200) {
+          setUsers(res.data.data);
+        }
+      })
+      .catch((err) => {
+        if (err.status === 401) {
+          enqueueSnackbar(err.response.data.Error, { variant: "error" });
+        } else {
+          const errMsg =
+            err.message || "Something Went Wrong Fetching Products";
+          enqueueSnackbar(errMsg, { variant: "error" });
+        }
+      });
+  };
 
   // Dummy data for demonstration
-  const [users, setUsers] = useState([
-    {
-      _id: "1",
-      name: "John Doe",
-      email: "john.doe@example.com",
-      createdAt: "2024-01-15",
-      isAdmin: false,
-    },
-    {
-      _id: "2",
-      name: "Jane Smith",
-      email: "jane.smith@example.com",
-      createdAt: "2024-01-20",
-      isAdmin: true,
-    },
-    {
-      _id: "3",
-      name: "Bob Johnson",
-      email: "bob.johnson@example.com",
-      createdAt: "2024-02-01",
-      isAdmin: false,
-    },
-    {
-      _id: "4",
-      name: "Bob Johnson",
-      email: "bob.johnson@example.com",
-      createdAt: "2024-02-01",
-      isAdmin: false,
-    },
-    {
-      _id: "7",
-      name: "Bob Johnson",
-      email: "bob.johnson@example.com",
-      createdAt: "2024-02-01",
-      isAdmin: false,
-    },
-    {
-      _id: "5",
-      name: "Bob Johnson",
-      email: "bob.johnson@example.com",
-      createdAt: "2024-02-01",
-      isAdmin: false,
-    },
-    {
-      _id: "6",
-      name: "Bob Johnson",
-      email: "bob.johnson@example.com",
-      createdAt: "2024-02-01",
-      isAdmin: false,
-    },
-  ]);
-
-  const [products, setProducts] = useState([
-    {
-      _id: "1",
-      name: "Wireless Headphones",
-      cost: 99.99,
-      rating: 4.5,
-      image: "https://via.placeholder.com/300x300",
-      category: "Electronics",
-      description: "High-quality wireless headphones",
-    },
-    {
-      _id: "2",
-      name: "Smart Watch",
-      cost: 199.99,
-      rating: 4.2,
-      image: "https://via.placeholder.com/300x300",
-      category: "Electronics",
-      description: "Feature-rich smart watch",
-    },
-    {
-      _id: "3",
-      name: "Coffee Maker",
-      cost: 79.99,
-      rating: 4.7,
-      image: "https://via.placeholder.com/300x300",
-      category: "Appliances",
-      description: "Automatic coffee maker",
-    },
-  ]);
 
   const [sales] = useState([
     {
@@ -171,20 +147,37 @@ const Admin = () => {
     role: "",
   });
 
+  const [editUser, setEditUser] = useState({
+    email: "",
+    name: "",
+    password: "",
+  });
+
+  const [editRole, setEditRole] = useState({
+    email: "",
+  });
+
   const [newProduct, setNewProduct] = useState({
     name: "",
     cost: "",
     rating: "",
     image: "",
     category: "",
-    description: "",
   });
-
-  // Edit states
-  const [editingUser, setEditingUser] = useState(null);
-  const [editingProduct, setEditingProduct] = useState(null);
-  const [editUserData, setEditUserData] = useState({});
-  const [editProductData, setEditProductData] = useState({});
+  const [editProduct, setEditProduct] = useState({
+    id: "",
+    name: "",
+    cost: "",
+    rating: "",
+    image: "",
+    category: "",
+  });
+  // Call APIs on Component Mount
+  useEffect(() => {
+    if (!token || !isAdmin || !isLoggedIn) return;
+    fetchAllProducts();
+    fetchAllUsers();
+  }, []);
 
   // Form handlers
   const handleUserCreation = () => {
@@ -217,79 +210,25 @@ const Admin = () => {
     setNewUser({ ...newUser, [field]: e.target.value });
   };
 
-  const handleProductChange = (field) => (e) => {
+  const handleUserEdit = (field) => (e) => {
+    setEditUser({ ...editUser, [field]: e.target.value });
+  };
+
+  const handleNewProductChange = (field) => (e) => {
     setNewProduct({ ...newProduct, [field]: e.target.value });
   };
 
+  const handleProductChange = (field) => (e) => {
+    setEditProduct({ ...editProduct, [field]: e.target.value });
+  };
+
   // Edit handlers
-  const handleEditUser = (user) => {
-    setEditingUser(user._id);
-    setEditUserData({
-      name: user.name,
-      email: user.email,
-      isAdmin: user.isAdmin,
-    });
-  };
+  const handleEditUser = (user) => {};
 
-  const handleEditProduct = (product) => {
-    setEditingProduct(product._id);
-    setEditProductData({
-      name: product.name,
-      cost: product.cost,
-      rating: product.rating,
-      image: product.image,
-      category: product.category,
-      description: product.description,
-    });
-  };
-
-  const handleUpdateUser = () => {
-    setUsers(
-      users.map((user) =>
-        user._id === editingUser ? { ...user, ...editUserData } : user
-      )
-    );
-    setEditingUser(null);
-    setEditUserData({});
-    console.log("Updated user:", editUserData);
-  };
-
-  const handleUpdateProduct = () => {
-    setProducts(
-      products.map((product) =>
-        product._id === editingProduct
-          ? { ...product, ...editProductData }
-          : product
-      )
-    );
-    setEditingProduct(null);
-    setEditProductData({});
-    console.log("Updated product:", editProductData);
-  };
-
-  const handleCancelEdit = () => {
-    setEditingUser(null);
-    setEditingProduct(null);
-    setEditUserData({});
-    setEditProductData({});
-  };
-
+  // TODO: Make this function to send delete request and save the retured data in setUsers
   const handleDeleteUser = (userId) => {
     setUsers(users.filter((user) => user._id !== userId));
     console.log("Deleted user:", userId);
-  };
-
-  const handleDeleteProduct = (productId) => {
-    setProducts(products.filter((product) => product._id !== productId));
-    console.log("Deleted product:", productId);
-  };
-
-  const handleEditUserDataChange = (field) => (e) => {
-    setEditUserData({ ...editUserData, [field]: e.target.value });
-  };
-
-  const handleEditProductDataChange = (field) => (e) => {
-    setEditProductData({ ...editProductData, [field]: e.target.value });
   };
 
   const getStatusColor = (status) => {
@@ -514,7 +453,12 @@ const Admin = () => {
                     color="warning"
                     fullWidth
                     onClick={() =>
-                      setNewUser({ name: "", email: "", password: "" })
+                      setNewUser({
+                        name: "",
+                        email: "",
+                        password: "",
+                        role: "",
+                      })
                     }
                   >
                     Reset
@@ -541,42 +485,41 @@ const Admin = () => {
             <Box p={2} border={1} borderColor="grey.300" borderRadius={2}>
               <Stack spacing={2}>
                 <Typography variant="h5">Update User By Email</Typography>
-                {
-                  // TODO Email Should be a dropdown where we can select user email to update. Email cannot be updated
-                }
-                <TextField
-                  label="Name"
-                  variant="outlined"
-                  placeholder="Enter Name"
-                  name="name"
-                  id="name"
-                  value={newUser.name}
-                  onChange={handleUserChange("name")}
-                  title="Name"
-                  type="text"
-                  fullWidth
-                />
                 <TextField
                   label="Email"
                   variant="outlined"
                   placeholder="Enter Email"
                   name="email"
-                  id="email"
-                  value={newUser.email}
-                  onChange={handleUserChange("email")}
+                  id="emailEdit"
+                  disabled
+                  value={editUser.email}
                   title="Email"
                   type="email"
                   fullWidth
                 />
+
                 <TextField
-                  label="Password"
+                  label="Name"
                   variant="outlined"
-                  type="password"
-                  placeholder="Enter Password"
+                  placeholder="Enter Name"
+                  name="name"
+                  id="nameEdit"
+                  value={editUser.name}
+                  onChange={handleUserEdit("name")}
+                  title="Name"
+                  type="text"
+                  fullWidth
+                />
+
+                <TextField
+                  label="New Password"
+                  variant="outlined"
+                  type="text"
+                  placeholder="Enter New Password, leave it if no updation required"
                   name="password"
-                  id="password"
-                  value={newUser.password}
-                  onChange={handleUserChange("password")}
+                  id="passwordEdit"
+                  value={editUser.password}
+                  onChange={handleUserEdit("password")}
                   title="Password"
                   fullWidth
                 />
@@ -587,7 +530,7 @@ const Admin = () => {
                     color="warning"
                     fullWidth
                     onClick={() =>
-                      setNewUser({ name: "", email: "", password: "" })
+                      setEditUser({ name: "", email: "", password: "" })
                     }
                   >
                     Reset
@@ -608,21 +551,30 @@ const Admin = () => {
                 <Divider />
                 <Typography variant="h6">Promote Role To Admin</Typography>
                 <Stack direction="row" spacing={2}>
-                  {
-                    //TODO Update user role based on email.
-                  }
                   <TextField
                     label="Email"
                     variant="outlined"
                     placeholder="Enter Normal User Email"
                     name="email"
-                    id="email"
-                    // value={newUser.email}
-                    // onChange={handleUserChange("email")}
+                    id="emailPromote"
+                    value={editRole.email}
+                    onChange={(e) => setEditRole({ email: e.target.value })}
                     title="Email"
                     type="email"
                     fullWidth
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            onClick={() => setEditRole({ email: "" })}
+                          >
+                            {editRole.email.length !== 0 && <Cancel />}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
                   />
+                  {/* TODO:Handle PromoteRole Api Request */}
                   <Button variant="contained" color="warning">
                     <Edit />
                     Promote
@@ -631,8 +583,8 @@ const Admin = () => {
               </Stack>
             </Box>
           </Grid>
-
-          <Grid item xs={12} sm={12}>
+          {/* User List Section */}
+          <Grid item xs={12} sm={12} mb={6}>
             <Card>
               <CardHeader title="Users List" />
               <CardContent>
@@ -645,6 +597,7 @@ const Admin = () => {
                         <TableCell>Role</TableCell>
                         <TableCell>Created</TableCell>
                         <TableCell>Delete</TableCell>
+                        <TableCell>Edit</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -676,6 +629,21 @@ const Admin = () => {
                               <Delete fontSize="small" />
                             </IconButton>
                           </TableCell>
+                          <TableCell>
+                            <IconButton
+                              size="small"
+                              color="info"
+                              onClick={() =>
+                                setEditUser({
+                                  email: user.email,
+                                  name: user.name,
+                                  password: user.password,
+                                })
+                              }
+                            >
+                              <Edit fontSize="small" />
+                            </IconButton>
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -685,144 +653,203 @@ const Admin = () => {
             </Card>
           </Grid>
 
-          {/* Products Section */}
-          {/* <Grid item xs={12} md={6}>
+          {/* Create Product Form */}
+          <Grid item xs={12} md={6}>
             <Card>
-              <CardHeader
-                title="Products"
-                action={
+              <CardHeader title="Create New Product" />
+              <CardContent>
+                {/* TODO: Handle Creation On click */}
+                <Box component="form">
+                  <TextField
+                    fullWidth
+                    label="Product Name"
+                    value={newProduct.name}
+                    onChange={handleNewProductChange("name")}
+                    margin="normal"
+                    required
+                  />
+                  <TextField
+                    fullWidth
+                    label="Cost"
+                    type="number"
+                    value={newProduct.cost}
+                    onChange={handleNewProductChange("cost")}
+                    margin="normal"
+                    required
+                    inputProps={{ step: "0.01", min: "0" }}
+                  />
+                  <TextField
+                    fullWidth
+                    label="Rating"
+                    type="number"
+                    value={newProduct.rating}
+                    onChange={handleNewProductChange("rating")}
+                    margin="normal"
+                    required
+                    inputProps={{ step: "0.1", min: "0", max: "5" }}
+                  />
+                  <TextField
+                    fullWidth
+                    label="Image URL"
+                    value={newProduct.image}
+                    onChange={handleNewProductChange("image")}
+                    margin="normal"
+                    required
+                  />
+                  <TextField
+                    fullWidth
+                    label="Category"
+                    value={newProduct.category}
+                    onChange={handleNewProductChange("category")}
+                    margin="normal"
+                    required
+                  />
+                  {/* TODO:Handle Submit request to create */}
+                  <Button variant="contained" fullWidth sx={{ mt: 2 }}>
+                    <Add />
+                    Create Product
+                  </Button>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* Update Product Section */}
+
+          <Grid item xs={12} md={6}>
+            <Card>
+              <CardHeader title="Edit Existing Product" />
+              <CardContent>
+                <Box component="form">
+                  <TextField
+                    fullWidth
+                    label="Product Id"
+                    value={editProduct.id}
+                    onChange={handleProductChange("id")}
+                    margin="normal"
+                    disabled
+                  />
+                  <TextField
+                    fullWidth
+                    label="Product Name"
+                    value={editProduct.name}
+                    onChange={handleProductChange("name")}
+                    margin="normal"
+                  />
+                  <TextField
+                    fullWidth
+                    label="Cost"
+                    type="number"
+                    value={editProduct.cost}
+                    onChange={handleProductChange("cost")}
+                    margin="normal"
+                    inputProps={{ step: "0.01", min: "0" }}
+                  />
+                  <TextField
+                    fullWidth
+                    label="Rating"
+                    type="number"
+                    value={editProduct.rating}
+                    onChange={handleProductChange("rating")}
+                    margin="normal"
+                    inputProps={{ step: "0.1", min: "0", max: "5" }}
+                  />
+                  <Stack direction="row" gap={1} alignItems="center">
+                    <TextField
+                      fullWidth
+                      label="Image URL"
+                      value={editProduct.image}
+                      onChange={handleProductChange("image")}
+                      margin="normal"
+                    />
+                    <Box className="image-container">
+                      <img
+                        // Add product image
+                        src={editProduct.image}
+                        // Add product name as alt eext
+                        alt={editProduct.name}
+                        width="100%"
+                        height="100%"
+                      />
+                    </Box>
+                  </Stack>
+
+                  <TextField
+                    fullWidth
+                    label="Category"
+                    value={editProduct.category}
+                    onChange={handleProductChange("category")}
+                    margin="normal"
+                  />
+                  {/* TODO:Handle submit request to edit product */}
                   <Button
                     variant="contained"
-                    startIcon={<Add />}
-                    onClick={() => {
-                      // TODO: Open product creation form modal
-                    }}
+                    color="warning"
+                    fullWidth
+                    sx={{ mt: 2 }}
                   >
-                    Add Product
+                    <Edit />
+                    Edit Product
                   </Button>
-                }
-              />
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* Products Section */}
+          <Grid item xs={12} mb={6}>
+            <Card>
+              <CardHeader title="Products List" />
               <CardContent>
-                <TableContainer>
-                  <Table size="small">
+                <TableContainer sx={{ maxHeight: 300, overflowY: "auto" }}>
+                  <Table stickyHeader size="large">
                     <TableHead>
                       <TableRow>
                         <TableCell>Name</TableCell>
                         <TableCell>Category</TableCell>
                         <TableCell>Price</TableCell>
                         <TableCell>Rating</TableCell>
-                        <TableCell align="center">Actions</TableCell>
+                        <TableCell>Delete</TableCell>
+                        <TableCell>Edit</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
                       {products.map((product) => (
-                        <TableRow 
+                        <TableRow
                           key={product._id}
                           sx={{
-                            '&:hover .action-buttons': {
+                            "&:hover .action-buttons": {
                               opacity: 1,
                             },
                           }}
                         >
+                          <TableCell>{product.name}</TableCell>
+                          <TableCell>{product.category}</TableCell>
+                          <TableCell>{`$${product.cost}`}</TableCell>
+                          <TableCell>{product.rating}</TableCell>
                           <TableCell>
-                            {editingProduct === product._id ? (
-                              <TextField
-                                size="small"
-                                value={editProductData.name}
-                                onChange={handleEditProductDataChange("name")}
-                                fullWidth
-                              />
-                            ) : (
-                              product.name
-                            )}
+                            <IconButton size="small" color="error">
+                              <Delete fontSize="small" />
+                            </IconButton>
                           </TableCell>
                           <TableCell>
-                            {editingProduct === product._id ? (
-                              <TextField
-                                size="small"
-                                value={editProductData.category}
-                                onChange={handleEditProductDataChange("category")}
-                                fullWidth
-                              />
-                            ) : (
-                              product.category
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            {editingProduct === product._id ? (
-                              <TextField
-                                size="small"
-                                type="number"
-                                value={editProductData.cost}
-                                onChange={handleEditProductDataChange("cost")}
-                                inputProps={{ step: "0.01", min: "0" }}
-                                fullWidth
-                              />
-                            ) : (
-                              `$${product.cost}`
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            {editingProduct === product._id ? (
-                              <TextField
-                                size="small"
-                                type="number"
-                                value={editProductData.rating}
-                                onChange={handleEditProductDataChange("rating")}
-                                inputProps={{ step: "0.1", min: "0", max: "5" }}
-                                fullWidth
-                              />
-                            ) : (
-                              product.rating
-                            )}
-                          </TableCell>
-                          <TableCell align="center">
-                            <Box 
-                              className="action-buttons"
-                              sx={{ 
-                                opacity: editingProduct === product._id ? 1 : 0,
-                                transition: 'opacity 0.2s',
-                                display: 'flex',
-                                gap: 1,
-                                justifyContent: 'center'
-                              }}
+                            {/* TODO: Add Onclick to fill the edit form */}
+                            <IconButton
+                              size="small"
+                              color="info"
+                              onClick={() =>
+                                setEditProduct({
+                                  id: product._id,
+                                  name: product.name,
+                                  cost: product.cost,
+                                  rating: product.rating,
+                                  image: product.image,
+                                  category: product.category,
+                                })
+                              }
                             >
-                              {editingProduct === product._id ? (
-                                <>
-                                  <IconButton
-                                    size="small"
-                                    color="success"
-                                    onClick={handleUpdateProduct}
-                                  >
-                                    <Typography variant="caption">OK</Typography>
-                                  </IconButton>
-                                  <IconButton
-                                    size="small"
-                                    color="error"
-                                    onClick={handleCancelEdit}
-                                  >
-                                    <Typography variant="caption">Cancel</Typography>
-                                  </IconButton>
-                                </>
-                              ) : (
-                                <>
-                                  <IconButton
-                                    size="small"
-                                    color="primary"
-                                    onClick={() => handleEditProduct(product)}
-                                  >
-                                    <Edit fontSize="small" />
-                                  </IconButton>
-                                  <IconButton
-                                    size="small"
-                                    color="error"
-                                    onClick={() => handleDeleteProduct(product._id)}
-                                  >
-                                    <Delete fontSize="small" />
-                                  </IconButton>
-                                </>
-                              )}
-                            </Box>
+                              <Edit fontSize="small" />
+                            </IconButton>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -831,15 +858,15 @@ const Admin = () => {
                 </TableContainer>
               </CardContent>
             </Card>
-          </Grid> */}
+          </Grid>
 
           {/* Sales Section */}
-          <Grid item xs={12}>
+          <Grid item xs={12} mb={6}>
             <Card>
               <CardHeader title="Sales & Orders" />
               <CardContent>
-                <TableContainer>
-                  <Table>
+                <TableContainer sx={{ maxHeight: 400, overflowY: "auto" }}>
+                  <Table stickyHeader size="large">
                     <TableHead>
                       <TableRow>
                         <TableCell>Order ID</TableCell>
@@ -878,124 +905,6 @@ const Admin = () => {
                     </TableBody>
                   </Table>
                 </TableContainer>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          {/* Create User Form */}
-          <Grid item xs={12} md={6}>
-            <Card>
-              <CardHeader title="Create New User" />
-              <CardContent>
-                <Box component="form">
-                  <TextField
-                    fullWidth
-                    label="Name"
-                    value={newUser.name}
-                    onChange={handleUserChange("name")}
-                    margin="normal"
-                    required
-                  />
-                  <TextField
-                    fullWidth
-                    label="Email"
-                    type="email"
-                    value={newUser.email}
-                    onChange={handleUserChange("email")}
-                    margin="normal"
-                    required
-                  />
-                  <TextField
-                    fullWidth
-                    label="Password"
-                    type="password"
-                    value={newUser.password}
-                    onChange={handleUserChange("password")}
-                    margin="normal"
-                    required
-                  />
-                  <Button
-                    type="submit"
-                    variant="contained"
-                    fullWidth
-                    sx={{ mt: 2 }}
-                  >
-                    Create User
-                  </Button>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          {/* Create Product Form */}
-          <Grid item xs={12} md={6}>
-            <Card>
-              <CardHeader title="Create New Product" />
-              <CardContent>
-                <Box component="form" onSubmit={handleProductSubmit}>
-                  <TextField
-                    fullWidth
-                    label="Product Name"
-                    value={newProduct.name}
-                    onChange={handleProductChange("name")}
-                    margin="normal"
-                    required
-                  />
-                  <TextField
-                    fullWidth
-                    label="Cost"
-                    type="number"
-                    value={newProduct.cost}
-                    onChange={handleProductChange("cost")}
-                    margin="normal"
-                    required
-                    inputProps={{ step: "0.01", min: "0" }}
-                  />
-                  <TextField
-                    fullWidth
-                    label="Rating"
-                    type="number"
-                    value={newProduct.rating}
-                    onChange={handleProductChange("rating")}
-                    margin="normal"
-                    required
-                    inputProps={{ step: "0.1", min: "0", max: "5" }}
-                  />
-                  <TextField
-                    fullWidth
-                    label="Image URL"
-                    value={newProduct.image}
-                    onChange={handleProductChange("image")}
-                    margin="normal"
-                    required
-                  />
-                  <TextField
-                    fullWidth
-                    label="Category"
-                    value={newProduct.category}
-                    onChange={handleProductChange("category")}
-                    margin="normal"
-                    required
-                  />
-                  <TextField
-                    fullWidth
-                    label="Description"
-                    multiline
-                    rows={3}
-                    value={newProduct.description}
-                    onChange={handleProductChange("description")}
-                    margin="normal"
-                    required
-                  />
-                  <Button
-                    type="submit"
-                    variant="contained"
-                    fullWidth
-                    sx={{ mt: 2 }}
-                  >
-                    Create Product
-                  </Button>
-                </Box>
               </CardContent>
             </Card>
           </Grid>

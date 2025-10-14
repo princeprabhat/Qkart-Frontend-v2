@@ -47,8 +47,45 @@ const Admin = () => {
   const token = localStorage.getItem("token");
 
   const { enqueueSnackbar } = useSnackbar();
+  // All Data States - On Page Load
   const [products, setProducts] = useState([]);
   const [users, setUsers] = useState([]);
+  const [sales, setSales] = useState([]);
+
+  // Form states
+  const [newUser, setNewUser] = useState({
+    name: "",
+    email: "",
+    password: "",
+    role: "",
+  });
+
+  const [editUser, setEditUser] = useState({
+    id: "",
+    email: "",
+    name: "",
+    password: "",
+  });
+
+  const [editRole, setEditRole] = useState({
+    email: "",
+  });
+
+  const [newProduct, setNewProduct] = useState({
+    name: "",
+    cost: "",
+    rating: "",
+    image: "",
+    category: "",
+  });
+  const [editProduct, setEditProduct] = useState({
+    id: "",
+    name: "",
+    cost: "",
+    rating: "",
+    image: "",
+    category: "",
+  });
 
   // Fetch All Products
   const fetchAllProducts = async () => {
@@ -75,7 +112,7 @@ const Admin = () => {
         }
       });
   };
-  // TODO: Fetch All Users
+  // Fetch All Users
   const fetchAllUsers = async () => {
     if (!token) return;
     const url = `${config.endpoint}/admin/users`;
@@ -100,96 +137,222 @@ const Admin = () => {
         }
       });
   };
+  // Fetch All Inventory
+  const fetchSalesData = async () => {
+    if (!token) return;
+    const url = `${config.endpoint}/admin/inventory/all`;
+    await axios
+      .get(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .then((res) => {
+        if (res.status === 200) {
+          setSales(res.data.data);
+        }
+      })
+      .catch((err) => {
+        const errMsg =
+          err.message || "Something went wrong fetching sales data";
+        enqueueSnackbar(errMsg, { variant: "error" });
+      });
+  };
 
-  // Dummy data for demonstration
+  // Create Normal User Request
+  const createUserApi = async () => {
+    if (!token) return;
+    const url = `${config.endpoint}/admin/users/create`;
+    const data = {
+      name: newUser.name,
+      email: newUser.email,
+      password: newUser.password,
+    };
+    await axios
+      .post(url, data, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .then((res) => {
+        if (res.status === 201) {
+          enqueueSnackbar("User Created Successfully", { variant: "success" });
+          setUsers((prev) => [...prev, res.data.data]);
+        }
+      })
+      .catch((err) => {
+        const errMsg =
+          err?.response?.data?.Error ||
+          "Something went wrong, Please try again later";
+        enqueueSnackbar(errMsg, { variant: "error" });
+      });
+  };
+  // Create Admin User Request
+  const createAdminApi = async () => {
+    if (!token) return;
+    const url = `${config.endpoint}/admin/users/createAdmin`;
+    const data = {
+      name: newUser.name,
+      email: newUser.email,
+      password: newUser.password,
+    };
+    await axios
+      .post(url, data, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .then((res) => {
+        if (res.status === 201) {
+          enqueueSnackbar("Admin User Created Successfully", {
+            variant: "success",
+          });
+          setUsers((prev) => [...prev, res.data.data]);
+        }
+      })
+      .catch((err) => {
+        const errMsg =
+          err?.response?.data?.Error ||
+          "Something went wrong, Please try again later";
+        enqueueSnackbar(errMsg, { variant: "error" });
+      });
+  };
+  // Promote Role to Admin Request
+  const promoteRoleApi = async () => {
+    if (!token) return;
+    if (
+      editRole.email === "" ||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editRole.email)
+    ) {
+      enqueueSnackbar("Email is not Valid", { variant: "error" });
+      return;
+    }
+    const url = `${config.endpoint}/admin/users/adminRole/edit`;
+    const data = {
+      email: editRole.email,
+    };
+    await axios
+      .patch(url, data, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .then((res) => {
+        if (res.status === 200) {
+          setUsers(
+            users.map((u) => (u._id === res.data.data._id ? res.data.data : u))
+          );
+          enqueueSnackbar("Role updated successfully!", { variant: "success" });
+        }
+      })
+      .catch((err) => {
+        if (err.response) {
+          enqueueSnackbar(err?.response?.data?.Error, { variant: "error" });
+        } else {
+          enqueueSnackbar("Something went wrong, updating user", {
+            variant: "error",
+          });
+        }
+      });
+  };
+  // Update User Request
+  const updateUserApi = async () => {
+    if (!token) return;
 
-  const [sales] = useState([
-    {
-      _id: "1",
-      orderId: "ORD-001",
-      customerName: "John Doe",
-      customerEmail: "john.doe@example.com",
-      totalAmount: 299.98,
-      orderDate: "2024-01-15",
-      status: "Delivered",
-      items: [
-        { productName: "Wireless Headphones", quantity: 1, price: 99.99 },
-        { productName: "Smart Watch", quantity: 1, price: 199.99 },
-      ],
-    },
-    {
-      _id: "2",
-      orderId: "ORD-002",
-      customerName: "Jane Smith",
-      customerEmail: "jane.smith@example.com",
-      totalAmount: 79.99,
-      orderDate: "2024-01-20",
-      status: "Processing",
-      items: [{ productName: "Coffee Maker", quantity: 1, price: 79.99 }],
-    },
-    {
-      _id: "3",
-      orderId: "ORD-003",
-      customerName: "Bob Johnson",
-      customerEmail: "bob.johnson@example.com",
-      totalAmount: 199.99,
-      orderDate: "2024-02-01",
-      status: "Shipped",
-      items: [{ productName: "Smart Watch", quantity: 1, price: 199.99 }],
-    },
-  ]);
+    const url = `${config.endpoint}/admin/users/${editUser.id}`;
+    const data =
+      editUser.password.length > 0
+        ? {
+            email: editUser.email,
+            name: editUser.name,
+            password: editUser.password,
+          }
+        : {
+            email: editUser.email,
+            name: editUser.name,
+          };
+    await axios
+      .put(url, data, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .then((res) => {
+        if (res.status === 200) {
+          setUsers(
+            users.map((u) => (u._id === res.data.user._id ? res.data.user : u))
+          );
+          enqueueSnackbar("User updated successfully!", { variant: "success" });
+        }
+      })
+      .catch((err) => {
+        if (err.response) {
+          enqueueSnackbar(err?.response?.data?.Error, { variant: "error" });
+        } else {
+          enqueueSnackbar("Something went wrong, updating user", {
+            variant: "error",
+          });
+        }
+      });
+  };
 
-  // Form states
-  const [newUser, setNewUser] = useState({
-    name: "",
-    email: "",
-    password: "",
-    role: "",
-  });
+  // Delete User Request
+  const deleteUserApi = async (userId) => {
+    if (!token) return;
+    const url = `${config.endpoint}/admin/users/deleteUser/${userId}`;
+    await axios
+      .delete(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .then((res) => {
+        if (res.status === 200) {
+          setUsers((prev) => prev.filter((u) => u._id !== userId));
+          enqueueSnackbar(res.data.message, { variant: "success" });
+        }
+      })
+      .catch((err) => {
+        if (err.response) {
+          enqueueSnackbar(err?.response?.data?.Error, { variant: "error" });
+        } else {
+          enqueueSnackbar("Something went wrong, updating user", {
+            variant: "error",
+          });
+        }
+      });
+  };
+  // Create a Product Request
+  const createProductApi = async () => {};
+  // Update a Product Request
+  const updateProductApi = async () => {};
+  // Delete a Product Request
+  const deleteProductApi = async () => {};
 
-  const [editUser, setEditUser] = useState({
-    email: "",
-    name: "",
-    password: "",
-  });
-
-  const [editRole, setEditRole] = useState({
-    email: "",
-  });
-
-  const [newProduct, setNewProduct] = useState({
-    name: "",
-    cost: "",
-    rating: "",
-    image: "",
-    category: "",
-  });
-  const [editProduct, setEditProduct] = useState({
-    id: "",
-    name: "",
-    cost: "",
-    rating: "",
-    image: "",
-    category: "",
-  });
   // Call APIs on Component Mount
   useEffect(() => {
     if (!token || !isAdmin || !isLoggedIn) return;
     fetchAllProducts();
     fetchAllUsers();
+    fetchSalesData();
   }, []);
 
   // Form handlers
   const handleUserCreation = () => {
     if (newUser.role === "admin") {
-      // Post a request for admin creation
+      // Validate and Post a request for admin creation
+      createAdminApi();
     } else {
-      // Post a request for user creation
+      //Post a request for user creation
+      createUserApi();
     }
 
-    console.log("Creating user:", newUser);
-    // TODO: Implement API call to create user
-    setNewUser({ name: "", email: "", password: "" });
+    setNewUser({ name: "", email: "", password: "", role: "" });
+  };
+
+  const handleUserEditApi = () => {
+    updateUserApi();
+    setEditUser({ id: "", email: "", name: "", password: "" });
   };
 
   const handleProductSubmit = (e) => {
@@ -222,29 +385,37 @@ const Admin = () => {
     setEditProduct({ ...editProduct, [field]: e.target.value });
   };
 
-  // Edit handlers
-  const handleEditUser = (user) => {};
-
   // TODO: Make this function to send delete request and save the retured data in setUsers
   const handleDeleteUser = (userId) => {
-    setUsers(users.filter((user) => user._id !== userId));
-    console.log("Deleted user:", userId);
+    if (!userId) {
+      enqueueSnackbar("User Id missing to delete the data", {
+        variant: "error",
+      });
+      return;
+    }
+    if (userId === localStorage.getItem("userId")) {
+      enqueueSnackbar("Current Logged-in user cannot be deleted", {
+        variant: "error",
+      });
+      return;
+    }
+    deleteUserApi(userId);
   };
 
   const getStatusColor = (status) => {
     switch (status) {
-      case "Delivered":
+      case "completed":
         return "success";
-      case "Processing":
+      case "failed":
         return "warning";
-      case "Shipped":
+      case "pending":
         return "info";
       default:
         return "default";
     }
   };
 
-  const validateForm = () => {
+  const validateNewUserForm = () => {
     if (newUser.name === "") {
       enqueueSnackbar("Name is required", { variant: "warning" });
       return false;
@@ -270,6 +441,28 @@ const Admin = () => {
 
     if (newUser.role === "") {
       enqueueSnackbar("Role is required", { variant: "warning" });
+      return false;
+    }
+    return true;
+  };
+
+  const validateEditUserForm = () => {
+    if (editUser.id === "") {
+      enqueueSnackbar("Please select a user to edit", { variant: "warning" });
+      return false;
+    }
+    if (editUser.email == "") {
+      enqueueSnackbar("Email is required", { variant: "warning" });
+      return false;
+    }
+    if (editUser.name === "") {
+      enqueueSnackbar("Name is required", { variant: "warning" });
+      return false;
+    }
+    if (editUser.password && editUser.password.length < 6) {
+      enqueueSnackbar("New Password length is less than 6", {
+        variant: "warning",
+      });
       return false;
     }
     return true;
@@ -380,7 +573,7 @@ const Admin = () => {
                     <Typography variant="h4">
                       $
                       {sales
-                        .reduce((sum, sale) => sum + sale.totalAmount, 0)
+                        .reduce((sum, sale) => sum + sale.amount, 0)
                         .toFixed(2)}
                     </Typography>
                     <Typography color="text.secondary">
@@ -467,7 +660,7 @@ const Admin = () => {
                     variant="contained"
                     fullWidth
                     onClick={() => {
-                      if (validateForm()) {
+                      if (validateNewUserForm()) {
                         handleUserCreation();
                       }
                     }}
@@ -484,15 +677,15 @@ const Admin = () => {
           <Grid item xs={12} md={6}>
             <Box p={2} border={1} borderColor="grey.300" borderRadius={2}>
               <Stack spacing={2}>
-                <Typography variant="h5">Update User By Email</Typography>
+                <Typography variant="h5">Update User</Typography>
                 <TextField
                   label="Email"
                   variant="outlined"
                   placeholder="Enter Email"
                   name="email"
                   id="emailEdit"
-                  disabled
                   value={editUser.email}
+                  onChange={handleUserEdit("email")}
                   title="Email"
                   type="email"
                   fullWidth
@@ -530,7 +723,7 @@ const Admin = () => {
                     color="warning"
                     fullWidth
                     onClick={() =>
-                      setEditUser({ name: "", email: "", password: "" })
+                      setEditUser({ id: "", name: "", email: "", password: "" })
                     }
                   >
                     Reset
@@ -539,9 +732,9 @@ const Admin = () => {
                     variant="contained"
                     fullWidth
                     onClick={() => {
-                      if (validateForm()) {
+                      if (validateEditUserForm()) {
                         // TODO handle user updatation
-                        // handleUserCreation();
+                        handleUserEditApi();
                       }
                     }}
                   >
@@ -575,7 +768,11 @@ const Admin = () => {
                     }}
                   />
                   {/* TODO:Handle PromoteRole Api Request */}
-                  <Button variant="contained" color="warning">
+                  <Button
+                    variant="contained"
+                    color="warning"
+                    onClick={() => promoteRoleApi()}
+                  >
                     <Edit />
                     Promote
                   </Button>
@@ -635,9 +832,10 @@ const Admin = () => {
                               color="info"
                               onClick={() =>
                                 setEditUser({
+                                  id: user._id,
                                   email: user.email,
                                   name: user.name,
-                                  password: user.password,
+                                  password: "",
                                 })
                               }
                             >
@@ -879,29 +1077,34 @@ const Admin = () => {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {sales.map((sale) => (
-                        <TableRow key={sale._id}>
-                          <TableCell>{sale.orderId}</TableCell>
-                          <TableCell>{sale.customerName}</TableCell>
-                          <TableCell>{sale.customerEmail}</TableCell>
-                          <TableCell>
-                            {sale.items.map((item, index) => (
-                              <Typography key={index} variant="body2">
-                                {item.productName} (x{item.quantity})
-                              </Typography>
-                            ))}
-                          </TableCell>
-                          <TableCell>${sale.totalAmount}</TableCell>
-                          <TableCell>
-                            <Chip
-                              label={sale.status}
-                              color={getStatusColor(sale.status)}
-                              size="small"
-                            />
-                          </TableCell>
-                          <TableCell>{sale.orderDate}</TableCell>
-                        </TableRow>
-                      ))}
+                      {sales.length > 0 &&
+                        sales.map((sale) => (
+                          <TableRow key={sale._id}>
+                            <TableCell>
+                              {"OID" + sale._id.slice(0, 7)}
+                            </TableCell>
+                            <TableCell>{sale.name}</TableCell>
+                            <TableCell>{sale.email}</TableCell>
+                            <TableCell>
+                              {sale.products.map((item, index) => (
+                                <Typography key={index} variant="body2">
+                                  {item.productName} (x{item.quantity})
+                                </Typography>
+                              ))}
+                            </TableCell>
+                            <TableCell>${sale.amount}</TableCell>
+                            <TableCell>
+                              <Chip
+                                label={sale.status}
+                                color={getStatusColor(sale.status)}
+                                size="small"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              {new Date(sale.createdAt).toLocaleDateString()}
+                            </TableCell>
+                          </TableRow>
+                        ))}
                     </TableBody>
                   </Table>
                 </TableContainer>

@@ -323,11 +323,124 @@ const Admin = () => {
       });
   };
   // Create a Product Request
-  const createProductApi = async () => {};
+  const createProductApi = async () => {
+    if (!token) return;
+    const url = `${config.endpoint}/admin/products/create`;
+    const data = {
+      name: newProduct.name,
+      category: newProduct.category,
+      cost: Number(newProduct.cost),
+      rating: newProduct.rating,
+      image: newProduct.image,
+    };
+
+    await axios
+      .post(url, data, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .then((res) => {
+        if (res.status === 201) {
+          setProducts((prev) => [...prev, res.data.data]);
+
+          enqueueSnackbar("Product Created Successfully", {
+            variant: "success",
+          });
+          setNewProduct({
+            name: "",
+            cost: "",
+            rating: "",
+            image: "",
+            category: "",
+            description: "",
+          });
+        }
+      })
+      .catch((err) => {
+        if (err.response) {
+          enqueueSnackbar(err?.response?.data?.Error, { variant: "error" });
+        } else {
+          enqueueSnackbar("Something went wrong, updating user", {
+            variant: "error",
+          });
+        }
+      });
+  };
   // Update a Product Request
-  const updateProductApi = async () => {};
+  const updateProductApi = async (productId) => {
+    if (!token) return;
+    const url = `${config.endpoint}/admin/products/updateProduct/${productId}`;
+    const data = {
+      name: editProduct.name,
+      cost: Number(editProduct.cost),
+      rating: Number(editProduct.rating),
+      image: editProduct.image,
+      category: editProduct.category,
+    };
+
+    await axios
+      .put(url, data, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .then((res) => {
+        if (res.status === 200) {
+          setProducts((prev) =>
+            prev.map((pr) => (pr._id === productId ? res.data.data : pr))
+          );
+          enqueueSnackbar("Product Updated Successfully", {
+            variant: "success",
+          });
+          setEditProduct({
+            id: "",
+            name: "",
+            cost: "",
+            category: "",
+            image: "",
+            rating: "",
+          });
+        }
+      })
+      .catch((err) => {
+        if (err.response) {
+          enqueueSnackbar(err?.response?.data?.Error, { variant: "error" });
+        } else {
+          enqueueSnackbar("Something went wrong, updating user", {
+            variant: "error",
+          });
+        }
+      });
+  };
   // Delete a Product Request
-  const deleteProductApi = async () => {};
+  const deleteProductApi = async (productId) => {
+    if (!token) return;
+    const url = `${config.endpoint}/admin/products/deleteProduct/${productId}`;
+    await axios
+      .delete(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .then((res) => {
+        if (res.status === 200) {
+          setProducts((prev) => prev.filter((item) => item._id !== productId));
+          enqueueSnackbar("Product Deleted Successfully", {
+            variant: "success",
+          });
+        }
+      })
+      .catch((err) => {
+        if (err.response) {
+          enqueueSnackbar(err?.response?.data?.Error, { variant: "error" });
+        } else {
+          enqueueSnackbar("Something went wrong, updating user", {
+            variant: "error",
+          });
+        }
+      });
+  };
 
   // Call APIs on Component Mount
   useEffect(() => {
@@ -355,18 +468,8 @@ const Admin = () => {
     setEditUser({ id: "", email: "", name: "", password: "" });
   };
 
-  const handleProductSubmit = (e) => {
-    e.preventDefault();
-    console.log("Creating product:", newProduct);
-    // TODO: Implement API call to create product
-    setNewProduct({
-      name: "",
-      cost: "",
-      rating: "",
-      image: "",
-      category: "",
-      description: "",
-    });
+  const handleProductCreation = () => {
+    createProductApi();
   };
 
   const handleUserChange = (field) => (e) => {
@@ -465,6 +568,67 @@ const Admin = () => {
       });
       return false;
     }
+    return true;
+  };
+
+  const validateProductCreate = () => {
+    if (!newProduct.name) {
+      enqueueSnackbar("Product Name is required", { variant: "warning" });
+      return false;
+    }
+    if (!newProduct.category) {
+      enqueueSnackbar("Product category is required", { variant: "warning" });
+      return false;
+    }
+    if (!newProduct.cost || Number(newProduct.cost) <= 0) {
+      enqueueSnackbar("Product cost is required and greater than 1$", {
+        variant: "warning",
+      });
+      return false;
+    }
+    if (!newProduct.image) {
+      enqueueSnackbar("Product Image link is required", { variant: "warning" });
+      return false;
+    }
+    if (!newProduct.rating) {
+      enqueueSnackbar("Product Rating is required", { variant: "warning" });
+      return false;
+    }
+    return true;
+  };
+
+  const validateEditProducts = () => {
+    if (!editProduct.id) {
+      enqueueSnackbar("Please select a product to edit", {
+        variant: "warning",
+      });
+      return false;
+    }
+    if (!editProduct.name) {
+      enqueueSnackbar("Product name is required to edit", {
+        variant: "warning",
+      });
+      return false;
+    }
+    if (!editProduct.cost) {
+      enqueueSnackbar("Product cost is required to edit", {
+        variant: "warning",
+      });
+      return false;
+    }
+    if (!editProduct.rating) {
+      enqueueSnackbar("Product rating is required to edit", {
+        variant: "warning",
+      });
+      return false;
+    }
+    if (!editProduct.image) {
+      enqueueSnackbar("Product image is required to edit", {
+        variant: "warning",
+      });
+      return false;
+    }
+
     return true;
   };
 
@@ -903,7 +1067,16 @@ const Admin = () => {
                     required
                   />
                   {/* TODO:Handle Submit request to create */}
-                  <Button variant="contained" fullWidth sx={{ mt: 2 }}>
+                  <Button
+                    variant="contained"
+                    fullWidth
+                    sx={{ mt: 2 }}
+                    onClick={() => {
+                      if (validateProductCreate()) {
+                        handleProductCreation();
+                      }
+                    }}
+                  >
                     <Add />
                     Create Product
                   </Button>
@@ -985,6 +1158,11 @@ const Admin = () => {
                     color="warning"
                     fullWidth
                     sx={{ mt: 2 }}
+                    onClick={() => {
+                      if (validateEditProducts()) {
+                        updateProductApi(editProduct.id);
+                      }
+                    }}
                   >
                     <Edit />
                     Edit Product
@@ -1026,7 +1204,11 @@ const Admin = () => {
                           <TableCell>{`$${product.cost}`}</TableCell>
                           <TableCell>{product.rating}</TableCell>
                           <TableCell>
-                            <IconButton size="small" color="error">
+                            <IconButton
+                              size="small"
+                              color="error"
+                              onClick={() => deleteProductApi(product._id)}
+                            >
                               <Delete fontSize="small" />
                             </IconButton>
                           </TableCell>

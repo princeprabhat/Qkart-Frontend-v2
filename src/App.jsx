@@ -12,14 +12,13 @@ const prodUrl = `https://qkart-backend-v2-ku0s.onrender.com/api/v1`;
 const localUrl = `http://localhost:3000/api/v1`;
 export const config = {
   endpoint:
-    import.meta.env.VITE_ENVIRONMENT == "development" ? localUrl : prodUrl,
+    import.meta.env.VITE_ENVIRONMENT == "production" ? prodUrl : localUrl,
 };
 
 function App() {
   return (
     <div className="App">
       <Routes>
-
         <Route path="/admin" element={<Admin />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />

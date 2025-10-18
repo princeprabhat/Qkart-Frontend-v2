@@ -6,9 +6,14 @@ import {
 } from "@mui/icons-material";
 import { Button, IconButton, Stack } from "@mui/material";
 import { Box } from "@mui/system";
-
+import { useSnackbar } from "notistack";
 import { useNavigate } from "react-router-dom";
 import "./Cart.css";
+import Footer from "./Footer";
+import Header from "./Header";
+import { useEffect, useState } from "react";
+import { config } from "../App";
+import axios from "axios";
 
 export const generateCartItemsFrom = (cartData, productsData) => {
   const cartRes = cartData.map((item) => {
@@ -61,18 +66,96 @@ const ItemQuantity = ({ value, handleAdd, handleDelete, isReadOnly }) => {
   );
 };
 
-const Cart = ({ products, cartItems, handleQuantity, isReadOnly }) => {
+const Cart = ({
+  products = [],
+  // cartItems = [],
+  handleQuantity,
+  isReadOnly,
+}) => {
+  const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
+  const isLoggedIn = localStorage.getItem("userId");
+  const [cartItems, setCartItems] = useState([]);
+
+  const updateCartQuantity = async (token, productId, qty) => {
+    if (!token) {
+      enqueueSnackbar("Login to add an item to the Cart", {
+        variant: "warning",
+      });
+
+      return;
+    }
+
+    const url = config.endpoint + "/cart";
+
+    const data = {
+      productId: productId,
+      quantity: qty,
+    };
+
+    const headers = {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    };
+
+    await axios
+      .put(url, data, { headers })
+      .then((response) => {
+        setCartItems(response.data.cartItems);
+      })
+      .catch((err) => {
+        if (err.response) {
+          enqueueSnackbar(err?.response?.data?.Error, { variant: "error" });
+        } else {
+          enqueueSnackbar(`${err.message} Please try again later`, {
+            variant: "error",
+          });
+        }
+      });
+  };
+
+  useEffect(() => {
+    if (!token || !isLoggedIn) {
+      enqueueSnackbar("Login to view the cart page", { variant: "warning" });
+      navigate("/");
+      return;
+    }
+
+    const fetchCart = async (token) => {
+      if (!token) return;
+
+      const url = `${config.endpoint}/cart`;
+      await axios
+        .get(url, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+        .then((res) => {
+          setCartItems(res?.data?.cart?.cartItems);
+        })
+        .catch((err) => {
+          const errMsg = err?.message || "Internal Server Error";
+          enqueueSnackbar(errMsg, { variant: "error" });
+        });
+    };
+
+    fetchCart(token);
+  }, []);
 
   if (!cartItems.length) {
     return (
-      <Box className="cart empty">
-        <ShoppingCartOutlined className="empty-cart-icon" />
-        <Box color="#aaa" textAlign="center">
-          Cart is empty. Add more items to the cart to checkout.
+      <>
+        <Header />
+        <Box className="cart empty">
+          <ShoppingCartOutlined className="empty-cart-icon" />
+          <Box color="#aaa" textAlign="center">
+            Cart is empty. Add more items to the cart to checkout.
+          </Box>
         </Box>
-      </Box>
+        <Footer />
+      </>
     );
   }
 
@@ -82,7 +165,8 @@ const Cart = ({ products, cartItems, handleQuantity, isReadOnly }) => {
 
   return (
     <>
-      <Box className="cart" width={{ md: "100%" }}>
+      <Header />
+      <Box className="cart">
         {resultCart.map((item) => {
           return (
             <Box
@@ -118,19 +202,15 @@ const Cart = ({ products, cartItems, handleQuantity, isReadOnly }) => {
                     // Add required props by checking implementation
                     value={item.quantity}
                     handleAdd={async () =>
-                      await handleQuantity(
+                      await updateCartQuantity(
                         token,
-                        cartItems,
-                        products,
                         item.product._id,
                         item.quantity + 1
                       )
                     }
                     handleDelete={async () =>
-                      await handleQuantity(
+                      await updateCartQuantity(
                         token,
-                        cartItems,
-                        products,
                         item.product._id,
                         item.quantity - 1
                       )
@@ -243,6 +323,7 @@ const Cart = ({ products, cartItems, handleQuantity, isReadOnly }) => {
           </Stack>
         </Box>
       )}
+      <Footer />
     </>
   );
 };

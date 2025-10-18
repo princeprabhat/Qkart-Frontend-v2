@@ -12,6 +12,7 @@ p {
   align-items: center;
   padding: 1rem;
   background-color: #dcffe4;
+  padding-top: 10rem;
 }
 
 #balance-overline {
@@ -28,9 +29,9 @@ p {
   font-weight: 700;
   text-transform: none;
 }
-
+/* 
 @media screen and (min-width: 768px) {
   .greeting-container {
     padding: 4rem;
   }
-}
+} */

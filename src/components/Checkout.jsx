@@ -271,7 +271,7 @@ const Checkout = () => {
           variant: "success",
         });
         localStorage.setItem("balance", res.data.cart.remainingWallet);
-        navigate("/thanks");
+        navigate("/thanks", { state: { fromCheckout: true } });
       })
       .catch((err) => {
         if (err.status == 400 || err.status == 404) {
@@ -341,7 +341,7 @@ const Checkout = () => {
   return (
     <>
       <Header hasHiddenAuthButtons IsLoggedIn />
-      <Grid container>
+      <Grid container pt="5rem">
         <Grid item xs={12} md={9}>
           <Box className="shipping-container" minHeight="100vh">
             <Typography color="#3C3C3C" variant="h4" my="1rem">

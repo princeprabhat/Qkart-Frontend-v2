@@ -16,3 +16,10 @@
 .product-img {
   aspect-ratio: 1;
 }
+
+@media screen and (max-width: 768px) {
+  .card-button {
+    padding: 8px !important;
+    font-size: 0.75rem !important;
+  }
+}

@@ -1,13 +1,14 @@
 import { Button } from "@mui/material";
 import { Box } from "@mui/system";
 import React, { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import Footer from "./Footer";
 import Header from "./Header";
 import "./Thanks.css";
 
 const Thanks = () => {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const routeToProducts = () => {
     navigate("/");
@@ -15,11 +16,13 @@ const Thanks = () => {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-
-    if (!token) {
-      navigate("/");
+    if (!location.state?.fromCheckout) {
+      navigate("/not-found", { replace: true });
     }
-  }, [navigate]);
+    if (!token) {
+      routeToProducts();
+    }
+  }, [navigate, location]);
 
   return (
     <>

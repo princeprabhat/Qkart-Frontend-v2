@@ -35,7 +35,7 @@ const Products = () => {
   const [items, setItems] = useState([]);
   const [loader, setLoader] = useState(false);
 
-  const [cartItems, setCartItems] = useState([]);
+  const [productCount, setProductCount] = useState(0);
   const [filteredItems, setFilteredItems] = useState([]);
   const [activeIndex, setActiveIndex] = useState(0);
 
@@ -71,10 +71,10 @@ const Products = () => {
       });
   };
 
-  const fetchCart = async (token) => {
+  const fetchCartCount = async (token) => {
     if (!token) return;
 
-    const url = `${config.endpoint}/cart`;
+    const url = `${config.endpoint}/cart/cartCount`;
     await axios
       .get(url, {
         headers: {
@@ -82,11 +82,16 @@ const Products = () => {
         },
       })
       .then((res) => {
-        setCartItems(res?.data?.cart?.cartItems);
+        if (res.status === 200) setProductCount(res?.data?.count);
       })
       .catch((err) => {
-        const errMsg = err?.message || "Internal Server Error";
-        enqueueSnackbar(errMsg, { variant: "error" });
+        if (err.response) {
+          enqueueSnackbar(err?.response?.data?.Error, { variant: "error" });
+        } else {
+          enqueueSnackbar("Something went wrong, updating user", {
+            variant: "error",
+          });
+        }
       });
   };
 
@@ -119,7 +124,7 @@ const Products = () => {
     }
 
     if (isLoggedIn) {
-      fetchCart(localStorage.getItem("token"));
+      fetchCartCount(localStorage.getItem("token"));
     }
   }, []);
 
@@ -183,39 +188,26 @@ const Products = () => {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     };
-    if (options.preventDuplicate) {
-      await axios
-        .post(url, data, { headers })
-        .then((response) => {
-          if (response.status === 201) {
-            setCartItems(response.data.cartItems);
-          }
-        })
-        .catch((err) => {
-          if (err.response && err.response.status === 400) {
-            enqueueSnackbar(err.response.data.Error, { variant: "error" });
-          } else {
-            enqueueSnackbar(`${err.message} Please try again later`, {
-              variant: "error",
-            });
-          }
-        });
-    } else {
-      await axios
-        .put(url, data, { headers })
-        .then((response) => {
-          setCartItems(response.data.cartItems);
-        })
-        .catch((err) => {
-          if (err.response) {
-            enqueueSnackbar(err?.response?.data?.Error, { variant: "error" });
-          } else {
-            enqueueSnackbar(`${err.message} Please try again later`, {
-              variant: "error",
-            });
-          }
-        });
-    }
+
+    await axios
+      .post(url, data, { headers })
+      .then((response) => {
+        if (response.status === 201) {
+          enqueueSnackbar("Product is added in the cart", {
+            variant: "success",
+          });
+          setProductCount(response?.data?.cartItems?.length);
+        }
+      })
+      .catch((err) => {
+        if (err.response && err.response.status === 400) {
+          enqueueSnackbar(err.response.data.Error, { variant: "error" });
+        } else {
+          enqueueSnackbar(`${err.message} Please try again later`, {
+            variant: "error",
+          });
+        }
+      });
   };
 
   return (
@@ -224,6 +216,8 @@ const Products = () => {
         hasHiddenAuthButtons={true}
         IsLoggedIn={isLoggedIn}
         isAdmin={localStorage.getItem("isAdmin") === "true" ? true : false}
+        hasCartIcon
+        productCount={productCount}
       >
         <TextField
           sx={{ width: "350px" }}
@@ -264,80 +258,79 @@ const Products = () => {
         }}
       />
 
-      <Grid container>
-        <Grid
-          container
-          sx={{ width: { md: `${isLoggedIn ? "75%" : "100%"}` } }}
-        >
-          <Grid item className="product-grid">
-            <Box className="hero">
-              <p className="hero-heading">
-                India’s <span className="hero-highlight">FASTEST DELIVERY</span>{" "}
-                to your door step
-              </p>
-            </Box>
-          </Grid>
-          {loader ? (
-            <Box className="loading">
-              <CircularProgress />
-
-              <h4>Loading Products</h4>
-            </Box>
-          ) : (
-            <Grid container spacing={2} p={1}>
-              {filteredItems.length > 0 &&
-                filteredItems.slice(start, end).map((item) => {
-                  return (
-                    <Grid item xs={6} md={4} lg={3} key={item["_id"]}>
-                      <ProductCard product={item} handleAddToCart={addToCart} />
-                    </Grid>
-                  );
-                })}
-            </Grid>
-          )}
-          <Box
-            display="flex"
-            justifyContent="center"
-            alignItems="center"
-            width="100%"
-          >
-            <IconButton
-              color="primary"
-              size="large"
-              disabled={activeIndex == 0}
-              onClick={() => handlePageChange("PrevPage")}
-            >
-              <ChevronLeft />
-            </IconButton>
-
-            <span
-              style={{
-                borderRadius: "6px",
-                padding: "3px 8px",
-                color: "white",
-                backgroundColor: "#00a278",
-              }}
-            >
-              {activeIndex + 1}
-            </span>
-            <IconButton
-              color="primary"
-              size="large"
-              disabled={activeIndex == numberOfPages - 1}
-              onClick={() => handlePageChange("NextPage")}
-            >
-              <ChevronRight />
-            </IconButton>
+      <Grid
+        container
+        // sx={{ width: { md: `${isLoggedIn ? "75%" : "100%"}` } }}
+      >
+        <Grid item className="product-grid">
+          <Box className="hero">
+            <p className="hero-heading">
+              India’s <span className="hero-highlight">FASTEST DELIVERY</span>{" "}
+              to your door step
+            </p>
           </Box>
-          {filteredItems.length == 0 && items.length !== 0 && (
-            <Box className="loading">
-              <SentimentDissatisfied />
-              <h4>No products found</h4>
-            </Box>
-          )}
         </Grid>
-        {/*Display the Cart component */}
-        <Grid
+        {loader ? (
+          <Box className="loading">
+            <CircularProgress />
+
+            <h4>Loading Products</h4>
+          </Box>
+        ) : (
+          <Grid container spacing={2} p={2}>
+            {filteredItems.length > 0 &&
+              filteredItems.slice(start, end).map((item) => {
+                return (
+                  <Grid item xs={6} md={4} lg={3} key={item["_id"]}>
+                    <ProductCard product={item} handleAddToCart={addToCart} />
+                  </Grid>
+                );
+              })}
+          </Grid>
+        )}
+        <Box
+          display="flex"
+          justifyContent="center"
+          alignItems="center"
+          width="100%"
+        >
+          <IconButton
+            color="primary"
+            size="large"
+            disabled={activeIndex == 0}
+            onClick={() => handlePageChange("PrevPage")}
+          >
+            <ChevronLeft />
+          </IconButton>
+
+          <span
+            style={{
+              borderRadius: "6px",
+              padding: "3px 8px",
+              color: "white",
+              backgroundColor: "#00a278",
+            }}
+          >
+            {activeIndex + 1}
+          </span>
+          <IconButton
+            color="primary"
+            size="large"
+            disabled={activeIndex == numberOfPages - 1}
+            onClick={() => handlePageChange("NextPage")}
+          >
+            <ChevronRight />
+          </IconButton>
+        </Box>
+        {filteredItems.length == 0 && items.length !== 0 && (
+          <Box className="loading">
+            <SentimentDissatisfied />
+            <h4>No products found</h4>
+          </Box>
+        )}
+      </Grid>
+      {/*Display the Cart component */}
+      {/* <Grid
           container
           sx={{
             width: { md: "25%" },
@@ -353,8 +346,7 @@ const Products = () => {
               handleQuantity={addToCart}
             />
           )}
-        </Grid>
-      </Grid>
+        </Grid> */}
 
       <Footer />
     </div>

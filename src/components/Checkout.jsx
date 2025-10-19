@@ -343,7 +343,7 @@ const Checkout = () => {
       <Header hasHiddenAuthButtons IsLoggedIn />
       <Grid container pt="5rem">
         <Grid item xs={12} md={9}>
-          <Box className="shipping-container" minHeight="100vh">
+          <Box className="shipping-container" minHeight="65vh">
             <Typography color="#3C3C3C" variant="h4" my="1rem">
               Shipping
             </Typography>
@@ -455,7 +455,8 @@ const Checkout = () => {
             </Button>
           </Box>
         </Grid>
-        <Grid item xs={12} md={3} bgcolor="#E9F5E1">
+        <Divider />
+        <Grid item xs={12} md={3} bgcolor="#ffffff">
           <Cart isReadOnly cartItems={cartItems} />
         </Grid>
       </Grid>

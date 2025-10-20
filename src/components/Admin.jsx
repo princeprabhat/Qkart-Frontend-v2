@@ -634,7 +634,7 @@ const Admin = () => {
 
   if (!isLoggedIn || !isAdmin) {
     return (
-      <div>
+      <div style={{ marginTop: "5rem" }}>
         <Header IsLoggedIn={isLoggedIn} isAdmin={isAdmin} />
         <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
           <Paper sx={{ p: 4, textAlign: "center" }}>
@@ -670,7 +670,7 @@ const Admin = () => {
         hasHiddenAuthButtons={true}
       />
 
-      <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
+      <Container maxWidth="xl" sx={{ mt: "5rem", mb: 4 }}>
         {/* Admin Dashboard Header */}
         <Box sx={{ mb: 4 }}>
           <Typography variant="h3" component="h1" gutterBottom>

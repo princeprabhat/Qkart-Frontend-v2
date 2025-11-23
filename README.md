@@ -13,6 +13,7 @@
 It supports secure user authentication, product management, order handling, and admin control over users and products.</p>
 
 🔗 **Live Demo:** [qkart-admin.app](https://qkart-frontend-v2-beryl.vercel.app/)
+🔗 **Backend Repo:** [qkart-backend](https://github.com/princeprabhat/Qkart-Backend-v2)
 
 ---
 
